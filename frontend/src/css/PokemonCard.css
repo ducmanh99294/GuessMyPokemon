@@ -1,0 +1,115 @@
+.pokemon-card {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 10px;
+
+    min-height: 150px;
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+
+    background: rgba(255, 255, 255, 0.025);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.pokemon-card:hover {
+    transform: translateY(-3px);
+
+    border-color: rgba(255, 215, 0, 0.35);
+
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pokemon-id {
+    align-self: flex-start;
+
+    font-size: 9px;
+    color: #6b7280;
+}
+
+.pokemon-image {
+    width: 80px;
+    height: 80px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pokemon-image img {
+    width: 72px;
+    height: 72px;
+
+    object-fit: contain;
+
+    image-rendering: pixelated;
+}
+
+.pokemon-card h3 {
+    margin: 2px 0 5px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: capitalize;
+
+    color: #f3f4f6;
+}
+
+.pokemon-types {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 3px;
+
+    flex-wrap: wrap;
+}
+
+.pokemon-types .type {
+    padding: 2px 5px;
+
+    border-radius: 4px;
+
+    font-size: 8px;
+    font-weight: 600;
+
+    text-transform: capitalize;
+
+    background: rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+}
+
+.pokemon-guess-btn {
+    margin-top: 7px;
+
+    padding: 3px 9px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: #ffd700;
+    color: #111827;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.pokemon-guess-btn:hover {
+    filter: brightness(1.1);
+}
+
+.pokemon-guess-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

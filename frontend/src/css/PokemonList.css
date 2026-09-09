@@ -1,0 +1,57 @@
+.pokemon-list {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.pokemon-card {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.pokemon-id {
+    text-align: left;
+    font-size: 13px;
+    color: #888;
+}
+
+.pokemon-image {
+    height: 120px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pokemon-image img {
+    width: 120px;
+    height: 120px;
+    image-rendering: pixelated;
+}
+
+.pokemon-card h3 {
+    margin: 8px 0;
+    text-transform: capitalize;
+}
+
+.pokemon-types {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.type {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #eee;
+}
+
+.pokemon-list-message {
+    padding: 40px;
+    text-align: center;
+}

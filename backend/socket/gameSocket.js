@@ -416,7 +416,7 @@ function setupGameSocket(io) {
         // =============================================
         socket.on(
             "guess_pokemon",
-            ({ roomId, pokemonId }, callback) => {
+            ({ roomId, pokemonId, targetPlayerId }, callback) => {
                 try {
                     if (!roomId) {
                         throw new Error(
@@ -437,7 +437,8 @@ function setupGameSocket(io) {
                         gameManager.guessPokemon(
                             roomId,
                             socket.playerId,
-                            pokemonId
+                            pokemonId,
+                            targetPlayerId
                         );
 
                     callback?.({
@@ -586,9 +587,9 @@ function setupGameSocket(io) {
 
         socket.on(
             "update_filters",
-             async ({ roomId, filters }, callback) => {
+            async ({ roomId, filters }, callback) => {
                 try {
-                    const updatedFilters =
+                    const result =
                         await gameManager.updateFilters(
                             roomId,
                             socket.playerId,
@@ -597,7 +598,8 @@ function setupGameSocket(io) {
 
                     callback?.({
                         success: true,
-                        filters: updatedFilters
+                        filters: result.filters,
+                        candidates: result.candidates
                     });
 
                 } catch (error) {

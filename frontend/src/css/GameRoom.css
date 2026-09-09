@@ -1016,6 +1016,45 @@ body,
       display: block;
     }
 
+    .guess-message {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    padding: 12px 24px;
+    border-radius: 10px;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    z-index: 9999;
+
+    animation: messageIn 0.25s ease-out;
+}
+
+.guess-message.success {
+    background: #22c55e;
+    color: white;
+}
+
+.guess-message.error {
+    background: #ef4444;
+    color: white;
+}
+
+@keyframes messageIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 1200px) {
       .game-grid {

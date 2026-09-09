@@ -292,53 +292,25 @@ class GameManager {
         };
     }
 
-    guessPokemon(roomId, playerId, pokemonId) {
-        const room = roomManager.getRoom(roomId);
+    guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
+        if (!room) throw new Error("Room not found");
+        if (room.status !== "playing") throw new Error("Game is not in progress");
 
-        if (!room) {
-            throw new Error("Room not found");
-        }
+        const player = roomManager.getPlayer(roomId, playerId);
+        if (!player) throw new Error("Player not found");
+        if (player.game.finished) throw new Error("You have already finished");
 
-        if (room.status !== "playing") {
-            throw new Error("Game is not in progress");
-        }
+        const resolvedTargetId = targetPlayerId || player.game.targetPlayerId;
 
-        const player = roomManager.getPlayer(
-            roomId,
-            playerId
-        );
-
-        if (!player) {
-            throw new Error("Player not found");
-        }
-
-        if (player.game.finished) {
-            throw new Error("You have already finished");
-        }
-
-        const targetPlayer = roomManager.getPlayer(
-            roomId,
-            player.game.targetPlayerId
-        );
-
-        if (!targetPlayer) {
-            throw new Error("Target player not found");
-        }
+        const targetPlayer = roomManager.getPlayer(roomId, resolvedTargetId);
+        if (!targetPlayer) throw new Error("Target player not found");
+        if (targetPlayer.id === playerId) throw new Error("Cannot guess your own Pokemon");
 
         const guessedPokemon = this.findPokemon(pokemonId);
+        if (!guessedPokemon) throw new Error("Pokemon not found");
 
-        if (!guessedPokemon) {
-            throw new Error("Pokemon not found");
-        }
-
-        const targetPokemon =
-            targetPlayer.game.targetPokemon;
-
-        if (!targetPokemon) {
-            throw new Error(
-                "Target Pokemon has not been selected"
-            );
-        }
+        const targetPokemon = targetPlayer.game.targetPokemon;
+        if (!targetPokemon) throw new Error("Target Pokemon has not been selected");
 
         player.game.guesses += 1;
 

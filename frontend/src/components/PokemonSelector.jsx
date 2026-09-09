@@ -63,7 +63,7 @@ function PokemonSelector({ room, onGameStarted }) {
     }, [onGameStarted]);
 
     function selectPokemon(pokemon) {
-        if (selecting || selectedPokemon) {
+        if (selecting) {
             return;
         }
 

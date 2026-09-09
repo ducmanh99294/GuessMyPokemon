@@ -350,7 +350,8 @@ async function filterPokemon(filters = {}) {
 
     }
 
-
+    result.sort((a, b) => a.id - b.id);
+    
     return result;
 }
 

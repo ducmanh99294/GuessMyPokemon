@@ -1,5 +1,5 @@
 import PokemonCard from "./PokemonCard";
-import '../css/PokemonList.css';
+import '../css/PokemonList.css'
 function PokemonList({
     pokemon = [],
     loading = false,

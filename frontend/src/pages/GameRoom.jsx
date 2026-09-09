@@ -21,7 +21,10 @@ import "../css/GameRoom.css";
 
 function GameRoom() {
     const { roomId } = useParams();
-
+    const [guessMessage, setGuessMessage] = useState("");
+    const [guessMessageType, setGuessMessageType] = useState("");
+    const [pendingGuess, setPendingGuess] = useState(null);
+    const [showTargetModal, setShowTargetModal] = useState(false);
     const [gameState, setGameState] = useState(null);
 
     const [activeTab, setActiveTab] = useState("clues");
@@ -29,6 +32,10 @@ function GameRoom() {
     const [guessResult, setGuessResult] = useState(null);
     const [gameFinished, setGameFinished] = useState(null);
 
+    const myPlayerId = getPlayerId();
+    const opponents = (gameState?.players || []).filter(
+        (p) => p.id !== myPlayerId && !p.finished
+    );
 
 const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
@@ -38,19 +45,24 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
     );
 
     function handleGuess(pokemon) {
-        if (guessing || gameState.finished) {
+        if (guessing || gameState.finished) return;
+
+        if (opponents.length > 1) {
+            // nhiều hơn 1 đối thủ -> mở popup chọn
+            setPendingGuess(pokemon);
+            setShowTargetModal(true);
             return;
         }
 
-        const confirmed =
-            window.confirm(
-                `Guess ${pokemon.name}?`
-            );
+        // chỉ có 1 đối thủ -> guess thẳng, không cần popup
+        const target = opponents[0];
+        const confirmed = window.confirm(`Guess ${pokemon.name}?`);
+        if (!confirmed) return;
 
-        if (!confirmed) {
-            return;
-        }
+        doGuess(pokemon, target?.id);
+    }
 
+    function doGuess(pokemon, targetPlayerId) {
         setGuessing(true);
         setGuessResult(null);
 
@@ -58,26 +70,51 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
             "guess_pokemon",
             {
                 roomId: gameState.roomId,
-                pokemonId: pokemon.id
+                pokemonId: pokemon.id,
+                targetPlayerId
             },
             (response) => {
                 setGuessing(false);
-
                 if (!response?.success) {
-                    setGuessResult({
-                        correct: false,
-                        error: response?.message
-                    });
-
+                    setGuessResult({ correct: false, error: response?.message });
                     return;
                 }
-
-                setGuessResult(
-                    response.result
-                );
+                setGuessResult(response.result);
             }
         );
     }
+
+    function confirmTargetSelection(targetPlayerId) {
+        setShowTargetModal(false);
+        doGuess(pendingGuess, targetPlayerId);
+        setPendingGuess(null);
+    }
+
+useEffect(() => {
+    const handleGuessResult = (data) => {
+        if (data.correct) {
+            setGuessMessage(
+                `🎉 Người chơi đã đoán đúng! +${data.score} điểm`
+            );
+            setGuessMessageType("success");
+        } else {
+            setGuessMessage("❌ Đoán sai!");
+            setGuessMessageType("error");
+        }
+
+        // Tự động ẩn sau 2 giây
+        setTimeout(() => {
+            setGuessMessage("");
+            setGuessMessageType("");
+        }, 2000);
+    };
+
+    socket.on("player_guess_result", handleGuessResult);
+
+    return () => {
+        socket.off("player_guess_result", handleGuessResult);
+    };
+}, []);
 
     useEffect(() => {
         function handleGameFinished(result) {
@@ -468,54 +505,6 @@ return (
             </div>
             </div>
 
-
-            {/* =====================================================
-                BOTTOM ACTION BAR
-            ====================================================== */}
-            <div className="action-bar">
-
-                <div className="clue-counter">
-
-                    <i className="fas fa-lightbulb"></i>
-
-                    {" "}Clues used:
-
-                    <span className="num">
-                        {gameState.cluesUsed}
-                    </span>
-
-                </div>
-
-                <div
-                    className="action-buttons"
-                    style={{
-                        display: "flex",
-                        gap: "12px",
-                        alignItems: "center",
-                        flexWrap: "wrap"
-                    }}
-                >
-
-                    <button
-                        className="ask-clue-btn"
-                        id="askClueBtn"
-                    >
-                        <i className="fas fa-question-circle"></i>
-                        {" "}Ask Clue
-                    </button>
-
-                    <button
-                        className="guess-btn"
-                        id="guessBtn"
-                        disabled
-                    >
-                        Guess Pokémon
-                    </button>
-
-                </div>
-
-            </div>
-
         </div>
 
 
@@ -719,6 +708,44 @@ return (
 
         </div>
 
+{showTargetModal && (
+    <div className="modal-overlay open">
+        <div className="modal">
+            <h2>Chọn người chơi để đoán</h2>
+            <p>Bạn muốn đoán Pokémon bí mật của ai?</p>
+
+            <div className="options">
+                {opponents.map((p) => (
+                    <button
+                        key={p.id}
+                        className="opt"
+                        onClick={() => confirmTargetSelection(p.id)}
+                    >
+                        {p.name}
+                    </button>
+                ))}
+            </div>
+
+            <div className="actions">
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                        setShowTargetModal(false);
+                        setPendingGuess(null);
+                    }}
+                >
+                    Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+{guessMessage && (
+    <div className={`guess-message ${guessMessageType}`}>
+        {guessMessage}
+    </div>
+)}
     </>
 );
 }

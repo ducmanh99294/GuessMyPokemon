@@ -114,7 +114,7 @@ function GameResult({
                     Rematch
                 </button>
 
-                <button>
+                <button onClick={onLeave}>
                     Leave Room
                 </button>
             </div>

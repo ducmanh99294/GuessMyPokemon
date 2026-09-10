@@ -44,7 +44,7 @@ export async function filterPokemon(filters = {}) {
 
     const response =
         await fetch(
-            `${API_URL}/filter?${params.toString()}`
+            `${API_URL}/api/pokemon/filter?${params.toString()}`
         );
 
 

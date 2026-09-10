@@ -122,6 +122,26 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         );
     }
 
+    function handleContinue() {
+        // Rematch đã được gọi bên trong GameResult (socket.emit "rematch")
+        // Sau khi thành công, điều hướng sang Lobby để chọn Pokémon mới
+        navigate(`/lobby/${roomId}`);
+    }
+
+    function handleLeaveResult() {
+        socket.emit(
+            "leave_room",
+            { roomId, playerId: myPlayerId },
+            (response) => {
+                if (response?.success) {
+                    localStorage.removeItem("pokemon_room_id");
+                    localStorage.removeItem("pokemon_guess_room");
+                    navigate("/");
+                }
+            }
+        );
+    }
+    
     useEffect(() => {
         if (!cooldownUntil) return;
         const interval = setInterval(() => {
@@ -381,6 +401,9 @@ useEffect(() => {
         return (
             <GameResult
                 result={gameFinished}
+                roomId={roomId}
+                onRematch={handleContinue} 
+                onLeave={handleLeaveResult} 
             />
         );
     }

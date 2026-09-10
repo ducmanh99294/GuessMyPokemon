@@ -1,11 +1,7 @@
 import '../css/PokemonCard.css'
 
 function PokemonCard({
-    pokemon,
-    onGuess,
-    guessing = false,
-    disabled = false,
-    eliminated = false
+    pokemon, onGuess, guessing, disabled, eliminated
 }) {
     return (
         <div className="pokemon-card">
@@ -49,8 +45,8 @@ function PokemonCard({
             {/* GUESS */}
             <button
                 type="button"
-                className="pokemon-guess-btn"
-                disabled={disabled || guessing}
+                className={`pokemon-card ${eliminated ? "eliminated" : ""}`}
+                disabled={disabled || guessing || eliminated}
                 onClick={() => onGuess?.(pokemon)}
             >
                 {eliminated ? "Đã sai" : guessing ? "..." : "Guess"}

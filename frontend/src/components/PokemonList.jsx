@@ -12,11 +12,7 @@ function getBatchSize() {
 }
 
 function PokemonList({
-    pokemon = [],
-    loading = false,
-    onGuess,
-    guessing = false,
-    disabled = false
+    pokemon = [], loading, onGuess, guessing, disabled, eliminatedIds = []
 }) {
     const [batchSize, setBatchSize] = useState(getBatchSize());
     const [visibleCount, setVisibleCount] = useState(getBatchSize());
@@ -78,7 +74,8 @@ return (
                     pokemon={item}
                     onGuess={onGuess}
                     guessing={guessing}
-                    disabled={disabled}
+                    disabled={disabled || eliminatedIds.includes(item.id)}
+                    eliminated={eliminatedIds.includes(item.id)}
                 />
             ))}
         </div>

@@ -799,12 +799,13 @@ function EffectivenessGrid({
                             <label
                                 key={type}
                                 className="type-checkbox"
+                                data-type={type}
+
                             >
 
                                 <input
                                     type="checkbox"
                                     checked={checked}
-                                    data-type={type}
                                     onChange={() =>
                                         toggleEffectiveness(
                                             effect,

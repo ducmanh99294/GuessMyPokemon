@@ -2,7 +2,7 @@ const roomManager = require("./roomManager");
 const pokemonMetadataCache = require("../cache/pokemonMetadataCache");
 const pokemonFilterService =
     require("../services/pokemonFilterService");
-    
+const GUESS_COOLDOWN_MS = 5000;
 const DEFAULT_FILTERS = {
     type: [],
     generation: null,
@@ -288,7 +288,7 @@ class GameManager {
 
             guesses:
                 player.game.guesses,
-
+            wrongGuesses: player.game.wrongGuesses,
             finished:
                 player.game.finished
         };
@@ -304,6 +304,18 @@ class GameManager {
         if (player.game.finished) throw new Error("You have already finished");
 
         const resolvedTargetId = targetPlayerId || player.game.targetPlayerId;
+
+            const now = Date.now();
+
+        if (player.game.lastGuessAt) {
+            const elapsed = now - player.game.lastGuessAt;
+            if (elapsed < GUESS_COOLDOWN_MS) {
+                throw new Error(
+                    `Please wait ${Math.ceil((GUESS_COOLDOWN_MS - elapsed) / 1000)}s before guessing again`
+                );
+            }
+        }
+        player.game.lastGuessAt = now;
 
         const targetPlayer = roomManager.getPlayer(roomId, resolvedTargetId);
         if (!targetPlayer) throw new Error("Target player not found");
@@ -356,13 +368,18 @@ class GameManager {
                 gameFinished
             };
         }
+
+            if (!player.game.wrongGuesses.includes(guessedPokemon.id)) {
+            player.game.wrongGuesses.push(guessedPokemon.id);
+        }
         return {
             correct: false,
             guessedPokemon,
             score: 0,
             totalScore: player.score,
             cluesUsed: player.game.cluesUsed,
-            guesses: player.game.guesses
+            guesses: player.game.guesses,
+            wrongGuesses: player.game.wrongGuesses
         };
     }
 
@@ -571,6 +588,8 @@ async updateFilters(
                 mythical: null,
                 hasEvolution: null,
                 mega: null,
+                wrongGuesses: [],      
+                lastGuessAt: null,
                 evolutionForms: null,
                 effective: [],
                 noEffect: [],

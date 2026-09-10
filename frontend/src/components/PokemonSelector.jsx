@@ -99,18 +99,17 @@ function PokemonSelector({ room, onGameStarted }) {
         );
     }
 
-if (loading) {
-    return (
+    if (loading) {
+        return (
         <div className="selector-page">
             <p className="selector-loading">Đang tải danh sách Pokémon...</p>
         </div>
-    );
-}
+        );
+    }
 
-return (
+    return (
     <div className="selector-page">
         <div className="selector-container">
-
             <header className="selector-header">
                 <h1>Chọn Pokémon của bạn</h1>
                 <p>
@@ -198,7 +197,8 @@ return (
                     Error: {error}
                 </p>
             )}
-        </main>
+            </div>
+        </div>
     );
 }
 

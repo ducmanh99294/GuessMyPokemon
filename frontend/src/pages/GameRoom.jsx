@@ -4,7 +4,7 @@ import FilterPanel from "../components/FilterPanel";
 import PokemonList from "../components/PokemonList";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "../css/GameRoom.css";
     const DEFAULT_FILTERS = {
         type: [],
@@ -25,12 +25,13 @@ function GameRoom() {
     const { roomId } = useParams();
     const [wrongGuesses, setWrongGuesses] = useState(new Set());
     const [guessMessage, setGuessMessage] = useState("");
+    const navigate = useNavigate();
     const [guessMessageType, setGuessMessageType] = useState("");
     const [pendingGuess, setPendingGuess] = useState(null);
     const [showTargetModal, setShowTargetModal] = useState(false);
     const [gameState, setGameState] = useState(null);
-
-    const [activeTab, setActiveTab] = useState("clues");
+    const [cooldownUntil, setCooldownUntil] = useState(0);
+    const [cooldownLeft, setCooldownLeft] = useState(0);
     const [guessing, setGuessing] = useState(false);
     const [guessResult, setGuessResult] = useState(null);
     const [gameFinished, setGameFinished] = useState(null);
@@ -95,6 +96,79 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         setShowTargetModal(false);
         doGuess(pendingGuess, targetPlayerId);
         setPendingGuess(null);
+    }
+
+    function leaveRoom() {
+        const confirmed = window.confirm("Bạn có chắc muốn rời phòng?");
+        if (!confirmed) return;
+
+        socket.emit(
+            "leave_room",
+            {
+                roomId: gameState?.roomId || roomId,
+                playerId: myPlayerId
+            },
+            (response) => {
+                if (!response?.success) {
+                    console.error("Leave room failed:", response?.message);
+                    return;
+                }
+
+                localStorage.removeItem("pokemon_room_id");
+                localStorage.removeItem("pokemon_guess_room");
+
+                navigate("/");
+            }
+        );
+    }
+
+    useEffect(() => {
+        if (!cooldownUntil) return;
+        const interval = setInterval(() => {
+            const left = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+            setCooldownLeft(left);
+            if (left <= 0) clearInterval(interval);
+        }, 250);
+        return () => clearInterval(interval);
+    }, [cooldownUntil]);
+
+    function handleGuess(pokemon) {
+        if (guessing || gameState.finished || cooldownLeft > 0) {
+            return;
+        }
+
+        const confirmed = window.confirm(`Guess ${pokemon.name}?`);
+        if (!confirmed) return;
+
+        setGuessing(true);
+        setGuessResult(null);
+
+        socket.emit(
+            "guess_pokemon",
+            { roomId: gameState.roomId, pokemonId: pokemon.id },
+            (response) => {
+                setGuessing(false);
+
+                if (!response?.success) {
+                    setGuessResult({ correct: false, error: response?.message });
+                    return;
+                }
+
+                const result = response.result;
+                setGuessResult(result);
+
+                // ⭐ set cooldown sau mỗi lần đoán (đúng hoặc sai)
+                setCooldownUntil(Date.now() + 3000);
+
+                // ⭐ cập nhật danh sách loại vào gameState
+                if (!result.correct && result.wrongGuesses) {
+                    setGameState((prev) => prev && ({
+                        ...prev,
+                        wrongGuesses: result.wrongGuesses
+                    }));
+                }
+            }
+        );
     }
 
 useEffect(() => {
@@ -281,6 +355,20 @@ useEffect(() => {
         });
     }
 
+    useEffect(() => {
+        function handlePlayerGuessResult({ playerId, correct, totalScore }) {
+            if (!correct) return;
+            setGameState((prev) => prev && ({
+                ...prev,
+                players: prev.players.map((p) =>
+                    p.id === playerId ? { ...p, score: totalScore, finished: true } : p
+                )
+            }));
+        }
+        socket.on("player_guess_result", handlePlayerGuessResult);
+        return () => socket.off("player_guess_result", handlePlayerGuessResult);
+    }, []);
+
     if (!gameState) {
         return (
             <main>
@@ -298,6 +386,7 @@ useEffect(() => {
     }
 
 return (
+    
     <>
         {/* BACKGROUND */}
         <div className="bg-layer" aria-hidden="true">
@@ -357,6 +446,7 @@ return (
                     <button
                         className="leave-btn"
                         id="leaveGameBtn"
+                        onClick={leaveRoom}
                     >
                         <i className="fas fa-sign-out-alt"></i>
                         {" "}Rời
@@ -377,143 +467,158 @@ return (
                 MAIN GAME
                 PLAYERS | POKEDEX | CHAT
             ====================================================== */}
-            <div className="game-grid">
+<div className="game-grid">
 
+    {/* =================================================
+        LEFT - PLAYERS
+    ================================================== */}
+    <div className="panel players-panel">
 
-                {/* =================================================
-                    LEFT - PLAYERS
-                ================================================== */}
-                <div className="panel players-panel">
+        <div className="panel-title">
+            Người chơi
+        </div>
 
-                    <div className="panel-title">
-                        Người chơi
+        <div className="player-list">
+
+            {gameState.players?.map((player) => (
+
+                <div
+                    key={player.id}
+                    className={`player-card ${
+                        player.connected === false
+                            ? "offline"
+                            : ""
+                    }`}
+                >
+
+                    <div className="player-avatar">
+                        {player.name
+                            ?.charAt(0)
+                            .toUpperCase()}
                     </div>
 
-                    <div className="player-list">
+                    <div className="player-info">
 
-                        {gameState.players?.map((player) => (
+                        <div className="player-name">
 
-                            <div
-                                key={player.id}
-                                className={`player-card ${
-                                    player.connected === false
-                                        ? "offline"
-                                        : ""
-                                }`}
-                            >
+                            {player.name}
 
-                                <div className="player-avatar">
-                                    {player.name
-                                        ?.charAt(0)
-                                        .toUpperCase()}
-                                </div>
+                            {player.id ===
+                                gameState.targetPlayerId && (
+                                <span className="target-badge">
+                                    TARGET
+                                </span>
+                            )}
 
-                                <div className="player-info">
+                        </div>
 
-                                    <div className="player-name">
+                        <div className="player-status">
 
-                                        {player.name}
+                            {player.finished
+                                ? "Đã đoán đúng"
+                                : player.connected === false
+                                ? "Offline"
+                                : "Đang chơi"}
 
-                                        {player.id ===
-                                            gameState.targetPlayerId && (
-                                            <span className="target-badge">
-                                                TARGET
-                                            </span>
-                                        )}
-
-                                    </div>
-
-                                    <div className="player-status">
-
-                                        {player.finished
-                                            ? "Đã đoán đúng"
-                                            : player.connected === false
-                                            ? "Offline"
-                                            : "Đang chơi"}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        ))}
+                        </div>
 
                     </div>
 
-                <ChatPanel
-                    roomId={gameState.roomId}
-                />
                 </div>
 
+            ))}
 
-                {/* =================================================
-                    CENTER - POKEDEX
-                ================================================== */}
-{/* POKEDEX */}
-<div className="pokemon-grid-wrapper">
+        </div>
 
-    <div className="grid-header">
+    </div>
+    {/* ⭐ ĐÓNG players-panel ở đây, KHÔNG chứa ChatPanel nữa */}
 
-        <span className="title">
-            <i className="fas fa-list-ul"></i>
-            {" "}Pokédex
-        </span>
 
-        <span className="count">
-            {gameState.candidates?.length || 0}
-            {" "}Pokémon
-        </span>
+    {/* =================================================
+        CENTER - POKEDEX
+    ================================================== */}
+    <div className="pokemon-grid-wrapper">
+
+        <div className="grid-header">
+
+            <span className="title">
+                <i className="fas fa-list-ul"></i>
+                {" "}Pokédex
+            </span>
+
+            <span className="count">
+                {gameState.candidates?.length || 0}
+                {" "}Pokémon
+            </span>
+
+        </div>
+
+        <PokemonList
+            pokemon={gameState.candidates || []}
+            loading={false}
+            onGuess={handleGuess}
+            guessing={guessing}
+            disabled={gameState.finished || cooldownLeft > 0}
+            eliminatedIds={gameState.wrongGuesses || []}
+        />
 
     </div>
 
-    <PokemonList
-        pokemon={gameState.candidates || []}
-        loading={false}
-        onGuess={handleGuess}
-        guessing={guessing}
-        disabled={gameState.finished}
-         wrongGuesses={wrongGuesses}
-    />
+
+    {/* =================================================
+        RIGHT - CHAT (⭐ khối riêng, ngang hàng với players/pokedex/filter)
+    ================================================== */}
+    <div className="panel chat-section">
+
+        <div className="panel-title">
+            Chat
+        </div>
+
+        <ChatPanel
+            roomId={gameState.roomId}
+        />
+
+    </div>
+
+
+    {/* =================================================
+        FILTER
+    ================================================== */}
+    <div className="filter-bar">
+
+        <div
+            className="filter-bar-header"
+            onClick={() => setFiltersOpen((prev) => !prev)}
+        >
+
+            <span>
+                <i className="fas fa-filter"></i>
+                Bộ lọc suy luận
+            </span>
+
+            <span className="filter-count">
+                {Object.values(filters).filter(
+                    (value) =>
+                        Array.isArray(value)
+                            ? value.length > 0
+                            : value !== null
+                ).length}{" "}
+                bộ lọc
+            </span>
+
+        </div>
+
+        {filtersOpen && (
+            <FilterPanel
+                filters={filters}
+                updateFilter={updateFilter}
+                removeFilter={removeFilter}
+            />
+        )}
+
+    </div>
 
 </div>
-
-
-                {/* =================================================
-                    RIGHT - CHAT
-                ================================================== */}
-
-            <div className="filter-bar">
-
-                <div className="filter-bar-header" onClick={() => setFiltersOpen((prev) => !prev)}>
-
-                    <span>
-                        <i className="fas fa-filter"></i>
-                        Bộ lọc suy luận
-                    </span>
-
-                    <span className="filter-count">
-                        {Object.values(filters).filter(
-                            (value) =>
-                                Array.isArray(value)
-                                    ? value.length > 0
-                                    : value !== null
-                        ).length}{" "}
-                        bộ lọc
-                    </span>
-
-                </div>
-
-                {filtersOpen && ( // ⭐ chỉ render khi mở
-                    <FilterPanel
-                        filters={filters}
-                        updateFilter={updateFilter}
-                        removeFilter={removeFilter}
-                    />
-                )}
-
-            </div>
-            </div>
 
         </div>
 
@@ -754,6 +859,36 @@ return (
 {guessMessage && (
     <div className={`guess-message ${guessMessageType}`}>
         {guessMessage}
+    </div>
+)}
+
+{guessResult?.correct && (
+    <div className="modal-overlay open">
+        <div className="modal">
+            <h2>🎉 Đoán đúng!</h2>
+            <p>Bảng điểm phòng {gameState.roomId}</p>
+
+            <div className="leaderboard">
+                {[...gameState.players]
+                    .sort((a, b) => (b.score || 0) - (a.score || 0))
+                    .map((p, i) => (
+                        <div className="row" key={p.id}>
+                            <span className="pos">#{i + 1}</span>
+                            <span className="pname">{p.name}</span>
+                            <span className="pscore">{p.score || 0}</span>
+                        </div>
+                    ))}
+            </div>
+
+            <div className="actions">
+                <button className="btn btn-secondary" onClick={leaveRoom}>
+                    Rời phòng
+                </button>
+                <button className="btn btn-primary" onClick={() => setGuessResult(null)}>
+                    Tiếp tục
+                </button>
+            </div>
+        </div>
     </div>
 )}
     </>

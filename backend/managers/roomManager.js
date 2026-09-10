@@ -108,7 +108,8 @@ class RoomManager {
                     notEffect: [],
                     superEffect: []
                 },
-
+                wrongGuesses: [],      
+                lastGuessAt: null,
                 cluesUsed: 0,
                 guesses: 0,
                 startTime: null,

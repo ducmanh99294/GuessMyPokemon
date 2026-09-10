@@ -497,7 +497,7 @@ async function getPokemonMetadata(
 
         baby:
             species.is_baby === true,
-
+        mega: data.name.includes("-mega"),
         sprite:
             data.sprites.front_default,
 

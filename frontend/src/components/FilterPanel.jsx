@@ -27,6 +27,7 @@ const DEFAULT_FILTERS = {
     generation: null,
     legendary: null,
     mythical: null,
+    mega: null,
     hasEvolution: null,
     evolutionForms: null,
     effective: [],
@@ -146,6 +147,7 @@ function FilterPanel({
                             <button
                                 key={type}
                                 type="button"
+                                data-type={type}
                                 className={
                                     isSelected
                                         ? "active"
@@ -307,6 +309,24 @@ function FilterPanel({
                     Mythical
                 </button>
 
+                <button
+                    type="button"
+                    className={
+                        filters.mega === true || filters.mega === "true"
+                            ? "active"
+                            : ""
+                    }
+                    onClick={() => {
+                        const active = filters.mega === true || filters.mega === "true";
+                        if (active) {
+                            handleRemoveFilter("mega");
+                        } else {
+                            handleUpdateFilter("mega", true);
+                        }
+                    }}
+                >
+                    Mega
+                </button>
             </section>
 
 
@@ -585,6 +605,14 @@ function FilterPanel({
 
                     )}
 
+                    {/* MEGA */}
+                    {(filters.mega === true || filters.mega === "true") && (
+                        <FilterChip
+                            label="Mega"
+                            onRemove={() => handleRemoveFilter("mega")}
+                        />
+                    )}
+
 
                     {/* HAS EVOLUTION */}
 
@@ -776,6 +804,7 @@ function EffectivenessGrid({
                                 <input
                                     type="checkbox"
                                     checked={checked}
+                                    data-type={type}
                                     onChange={() =>
                                         toggleEffectiveness(
                                             effect,

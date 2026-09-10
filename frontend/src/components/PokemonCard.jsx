@@ -4,7 +4,8 @@ function PokemonCard({
     pokemon,
     onGuess,
     guessing = false,
-    disabled = false
+    disabled = false,
+    eliminated = false
 }) {
     return (
         <div className="pokemon-card">
@@ -52,7 +53,7 @@ function PokemonCard({
                 disabled={disabled || guessing}
                 onClick={() => onGuess?.(pokemon)}
             >
-                {guessing ? "..." : "Guess"}
+                {eliminated ? "Đã sai" : guessing ? "..." : "Guess"}
             </button>
 
         </div>

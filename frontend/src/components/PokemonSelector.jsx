@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import socket from "../socket/socket";
 import { filterPokemon } from "../services/pokemonApi";
-
+import '../css/PokemonSelector.css'
 function PokemonSelector({ room, onGameStarted }) {
     const [pokemon, setPokemon] = useState([]);
     const [selectedPokemon, setSelectedPokemon] = useState(null);
@@ -99,68 +99,66 @@ function PokemonSelector({ room, onGameStarted }) {
         );
     }
 
-    if (loading) {
-        return (
-            <main>
-                <h1>Choose your Pokémon</h1>
-                <p>Loading Pokémon...</p>
-            </main>
-        );
-    }
-
+if (loading) {
     return (
-        <main>
-            <header>
-                <h1>Choose your Pokémon</h1>
+        <div className="selector-page">
+            <p className="selector-loading">Đang tải danh sách Pokémon...</p>
+        </div>
+    );
+}
 
+return (
+    <div className="selector-page">
+        <div className="selector-container">
+
+            <header className="selector-header">
+                <h1>Chọn Pokémon của bạn</h1>
                 <p>
-                    Choose one Pokémon secretly.
-                    Other players will not see your choice.
+                    Chọn một Pokémon bí mật. Những người chơi khác
+                    sẽ không thấy lựa chọn của bạn.
                 </p>
             </header>
 
-            <section>
-                <h2>Players</h2>
-
+            <section className="selector-players">
                 {room.players.map((player) => (
-                    <div key={player.id}>
-                        <span>{player.name}</span>
-
-                        {player.hasSelectedPokemon ? (
-                            <strong> ✓ Ready</strong>
-                        ) : (
-                            <span> Choosing...</span>
-                        )}
+                    <div
+                        key={player.id}
+                        className={`selector-player-chip ${
+                            player.hasSelectedPokemon ? "ready" : "waiting"
+                        }`}
+                    >
+                        <span className="avatar">
+                            {player.name?.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="name">{player.name}</span>
+                        <span className="state">
+                            {player.hasSelectedPokemon ? "✓ Sẵn sàng" : "Đang chọn..."}
+                        </span>
                     </div>
                 ))}
             </section>
 
             {selectedPokemon && (
-                <section>
-                    <h2>Your Pokémon</h2>
+                <section className="selected-bar">
+                    {selectedPokemon.sprite && (
+                        <img
+                            src={selectedPokemon.sprite}
+                            alt={selectedPokemon.name}
+                        />
+                    )}
 
-                    <div>
-                        {selectedPokemon.sprite && (
-                            <img
-                                src={selectedPokemon.sprite}
-                                alt={selectedPokemon.name}
-                                width="120"
-                            />
-                        )}
-
-                        <h3>
-                            {selectedPokemon.name}
-                        </h3>
-
-                        <button
-                            onClick={confirmSelection}
-                            disabled={selecting}
-                        >
-                            {selecting
-                                ? "Waiting for players..."
-                                : "Confirm"}
-                        </button>
+                    <div className="info">
+                        <div className="label">Pokémon của bạn</div>
+                        <div className="name">{selectedPokemon.name}</div>
                     </div>
+
+                    <button
+                        className="confirm-btn"
+                        onClick={confirmSelection}
+                        disabled={selecting}
+                    >
+                        {selecting ? "Đang chờ..." : "Xác nhận"}
+                    </button>
                 </section>
             )}
 

@@ -100,6 +100,7 @@ class RoomManager {
                     generation: null,
                     legendary: null,
                     mythical: null,
+                    mega: null,
                     hasEvolution: null,
                     evolutionForms: null,
                     effective: [],

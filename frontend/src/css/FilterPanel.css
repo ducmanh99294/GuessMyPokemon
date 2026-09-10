@@ -1,4 +1,27 @@
 /* =========================================================
+   TYPE BUTTON COLORS (khi active)
+========================================================= */
+
+.type-grid button[data-type="normal"].active   { background: rgba(168, 168, 120, 0.15); border-color: rgba(168, 168, 120, 0.5); color: #c6c6a7; }
+.type-grid button[data-type="fire"].active     { background: rgba(240, 128, 48, 0.15);  border-color: rgba(240, 128, 48, 0.5);  color: #ff9d55; }
+.type-grid button[data-type="water"].active    { background: rgba(104, 144, 240, 0.15); border-color: rgba(104, 144, 240, 0.5); color: #6890f0; }
+.type-grid button[data-type="electric"].active { background: rgba(248, 208, 48, 0.15);  border-color: rgba(248, 208, 48, 0.5);  color: #f8d030; }
+.type-grid button[data-type="grass"].active    { background: rgba(120, 200, 80, 0.15);  border-color: rgba(120, 200, 80, 0.5);  color: #78c850; }
+.type-grid button[data-type="ice"].active      { background: rgba(152, 216, 216, 0.15); border-color: rgba(152, 216, 216, 0.5); color: #98d8d8; }
+.type-grid button[data-type="fighting"].active { background: rgba(192, 48, 40, 0.15);   border-color: rgba(192, 48, 40, 0.5);   color: #e0524a; }
+.type-grid button[data-type="poison"].active   { background: rgba(160, 64, 160, 0.15);  border-color: rgba(160, 64, 160, 0.5);  color: #c060c0; }
+.type-grid button[data-type="ground"].active   { background: rgba(224, 192, 104, 0.15); border-color: rgba(224, 192, 104, 0.5); color: #e0c068; }
+.type-grid button[data-type="flying"].active   { background: rgba(168, 144, 240, 0.15); border-color: rgba(168, 144, 240, 0.5); color: #a890f0; }
+.type-grid button[data-type="psychic"].active  { background: rgba(248, 88, 136, 0.15);  border-color: rgba(248, 88, 136, 0.5);  color: #f96b96; }
+.type-grid button[data-type="bug"].active      { background: rgba(168, 184, 32, 0.15);  border-color: rgba(168, 184, 32, 0.5);  color: #a8b820; }
+.type-grid button[data-type="rock"].active     { background: rgba(184, 160, 56, 0.15);  border-color: rgba(184, 160, 56, 0.5);  color: #b8a038; }
+.type-grid button[data-type="ghost"].active    { background: rgba(112, 88, 152, 0.15);  border-color: rgba(112, 88, 152, 0.5);  color: #9070b8; }
+.type-grid button[data-type="dragon"].active   { background: rgba(112, 56, 248, 0.15);  border-color: rgba(112, 56, 248, 0.5);  color: #8560f8; }
+.type-grid button[data-type="dark"].active     { background: rgba(112, 88, 72, 0.15);   border-color: rgba(112, 88, 72, 0.5);   color: #8a7166; }
+.type-grid button[data-type="steel"].active    { background: rgba(184, 184, 208, 0.15); border-color: rgba(184, 184, 208, 0.5); color: #c4c4d8; }
+.type-grid button[data-type="fairy"].active    { background: rgba(238, 153, 172, 0.15); border-color: rgba(238, 153, 172, 0.5); color: #ffb6c7; }
+
+/* =========================================================
    FILTER PANEL
 ========================================================= */
 
@@ -240,7 +263,7 @@ type-grid
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(2, minmax(0, 1fr));
 
     gap: 10px;
 
@@ -317,7 +340,7 @@ type-grid
 
 .effectiveness-header {
     width: 100%;
-    min-height: 28px;
+    min-height: 24px;
 
     display: flex;
     align-items: center;
@@ -325,7 +348,7 @@ type-grid
 
     gap: 5px;
 
-    padding: 5px 7px;
+    padding: 4px 6px;
 
     box-sizing: border-box;
 
@@ -375,9 +398,8 @@ type-grid
     font-size: 8px;
 }
 
-
 /* =========================================================
-   TYPE CHECKBOX LIST
+   TYPE CHECKBOX LIST — gọn hơn
 ========================================================= */
 
 .type-checkbox-list {
@@ -385,53 +407,76 @@ type-grid
     min-width: 0;
 
     display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr)); /* ⭐ 6 -> 2 cột, vừa khung hẹp */
+    gap: 3px;
 
-    /*
-        6 type / row
-    */
-    grid-template-columns:
-        repeat(6, minmax(0, 1fr));
+    padding: 6px;
+    margin-top: 2px;
 
-    gap: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.015);
 
     box-sizing: border-box;
+
+    max-height: 160px;      /* ⭐ giới hạn chiều cao, tránh sổ quá dài */
+    overflow-y: auto;
+
+    animation: dropDown 0.15s ease-out; /* ⭐ mở gọn có hiệu ứng nhẹ */
 }
 
+@keyframes dropDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 /* =========================================================
-   TYPE CHECKBOX
+   TYPE CHECKBOX — thu nhỏ
 ========================================================= */
 
 .type-checkbox {
     min-width: 0;
     width: 100%;
-    height: 24px;
+    height: 20px;
 
     display: flex;
-
     flex-direction: row !important;
-
     align-items: center;
     justify-content: flex-start;
 
-    gap: 3px;
+    gap: 4px;
 
-    padding: 2px 4px;
+    padding: 1px 5px;
 
     box-sizing: border-box;
 
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 4px;
 
-    background: rgba(255, 255, 255, 0.025);
+    background: rgba(255, 255, 255, 0.02);
 
     color: #9ca3af;
 
-    font-size: 8px;
+    font-size: 8.5px;
 
     cursor: pointer;
 
-    white-space: nowrap;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+/* Custom scrollbar cho list gọn */
+.type-checkbox-list::-webkit-scrollbar {
+    width: 4px;
+}
+.type-checkbox-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
 }
 
 
@@ -440,8 +485,8 @@ type-grid
 ========================================================= */
 
 .type-checkbox input[type="checkbox"] {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
 
     margin: 0;
 
@@ -458,13 +503,15 @@ type-grid
 ========================================================= */
 
 .type-checkbox span {
+    flex: 1 1 auto;
     min-width: 0;
 
     overflow: hidden;
-
     text-overflow: ellipsis;
-
     white-space: nowrap;
+
+    text-transform: capitalize;
+    color: inherit;
 }
 
 
@@ -613,4 +660,49 @@ type-grid
     background: rgba(255, 60, 60, 0.1) !important;
 
     color: #ff9999 !important;
+}
+
+/* =========================================================
+   MOBILE RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+    .filter-panel section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .filter-panel section h3 {
+        flex: none;
+    }
+
+    .type-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .generation-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .effectiveness-grid-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .type-checkbox-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-panel button {
+        height: 30px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 400px) {
+    .type-grid,
+    .generation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

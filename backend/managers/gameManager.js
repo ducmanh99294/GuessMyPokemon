@@ -9,6 +9,7 @@ const DEFAULT_FILTERS = {
     legendary: null,
     mythical: null,
     hasEvolution: null,
+    mega: null,
     evolutionForms: null,
     effective: [],
     noEffect: [],
@@ -172,6 +173,7 @@ class GameManager {
                 legendary: null,
                 mythical: null,
                 hasEvolution: null,
+                mega: null,
                 evolutionForms: null,
                 effective: [],
                 noEffect: [],
@@ -293,6 +295,7 @@ class GameManager {
     }
 
     guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
+        const room = roomManager.getRoom(roomId);
         if (!room) throw new Error("Room not found");
         if (room.status !== "playing") throw new Error("Game is not in progress");
 
@@ -567,6 +570,7 @@ async updateFilters(
                 legendary: null,
                 mythical: null,
                 hasEvolution: null,
+                mega: null,
                 evolutionForms: null,
                 effective: [],
                 noEffect: [],

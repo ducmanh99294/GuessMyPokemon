@@ -160,7 +160,18 @@ async function filterPokemon(filters = {}) {
             }
         }
 
+        // =================================================
+        // MEGA
+        // =================================================
 
+        const megaFilter = normalizeBoolean(filters.mega);
+
+        if (megaFilter !== null) {
+            if (Boolean(metadata.mega) !== megaFilter) {
+                continue;
+            }
+        }
+        
         // =================================================
         // HAS EVOLUTION
         // =================================================

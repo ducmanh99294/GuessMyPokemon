@@ -1,3 +1,26 @@
+/* =========================================================
+   TYPE COLORS
+========================================================= */
+
+.type-normal   { background: rgba(168, 168, 120, 0.18); color: #c6c6a7; }
+.type-fire     { background: rgba(240, 128, 48, 0.18);  color: #ff9d55; }
+.type-water    { background: rgba(104, 144, 240, 0.18); color: #6890f0; }
+.type-electric { background: rgba(248, 208, 48, 0.18);  color: #f8d030; }
+.type-grass    { background: rgba(120, 200, 80, 0.18);  color: #78c850; }
+.type-ice      { background: rgba(152, 216, 216, 0.18); color: #98d8d8; }
+.type-fighting { background: rgba(192, 48, 40, 0.18);   color: #e0524a; }
+.type-poison   { background: rgba(160, 64, 160, 0.18);  color: #c060c0; }
+.type-ground   { background: rgba(224, 192, 104, 0.18); color: #e0c068; }
+.type-flying   { background: rgba(168, 144, 240, 0.18); color: #a890f0; }
+.type-psychic  { background: rgba(248, 88, 136, 0.18);  color: #f96b96; }
+.type-bug      { background: rgba(168, 184, 32, 0.18);  color: #a8b820; }
+.type-rock     { background: rgba(184, 160, 56, 0.18);  color: #b8a038; }
+.type-ghost    { background: rgba(112, 88, 152, 0.18);  color: #9070b8; }
+.type-dragon   { background: rgba(112, 56, 248, 0.18);  color: #8560f8; }
+.type-dark     { background: rgba(112, 88, 72, 0.18);   color: #8a7166; }
+.type-steel    { background: rgba(184, 184, 208, 0.18); color: #c4c4d8; }
+.type-fairy    { background: rgba(238, 153, 172, 0.18); color: #ffb6c7; }
+
 .pokemon-card {
     position: relative;
 
@@ -18,6 +41,12 @@
         transform 0.2s ease,
         border-color 0.2s ease,
         background 0.2s ease;
+}
+
+.pokemon-card.eliminated {
+    opacity: 0.35;
+    filter: grayscale(0.8);
+    pointer-events: none;
 }
 
 .pokemon-card:hover {
@@ -113,3 +142,4 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+

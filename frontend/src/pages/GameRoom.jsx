@@ -11,6 +11,7 @@ import "../css/GameRoom.css";
         generation: null,
         legendary: null,
         mythical: null,
+        mega: null,
         hasEvolution: null,
         evolutionForms: null,
         effective: [],
@@ -20,7 +21,9 @@ import "../css/GameRoom.css";
     };
 
 function GameRoom() {
+    const [filtersOpen, setFiltersOpen] = useState(true); // ⭐ thêm state
     const { roomId } = useParams();
+    const [wrongGuesses, setWrongGuesses] = useState(new Set());
     const [guessMessage, setGuessMessage] = useState("");
     const [guessMessageType, setGuessMessageType] = useState("");
     const [pendingGuess, setPendingGuess] = useState(null);
@@ -80,6 +83,10 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
                     return;
                 }
                 setGuessResult(response.result);
+
+                if (!response.result.correct) {
+                    setWrongGuesses((prev) => new Set(prev).add(pokemon.id));
+                }
             }
         );
     }
@@ -466,6 +473,7 @@ return (
         onGuess={handleGuess}
         guessing={guessing}
         disabled={gameState.finished}
+         wrongGuesses={wrongGuesses}
     />
 
 </div>
@@ -477,7 +485,7 @@ return (
 
             <div className="filter-bar">
 
-                <div className="filter-bar-header">
+                <div className="filter-bar-header" onClick={() => setFiltersOpen((prev) => !prev)}>
 
                     <span>
                         <i className="fas fa-filter"></i>
@@ -496,11 +504,13 @@ return (
 
                 </div>
 
-                <FilterPanel
-                    filters={filters}
-                    updateFilter={updateFilter}
-                    removeFilter={removeFilter}
-                />
+                {filtersOpen && ( // ⭐ chỉ render khi mở
+                    <FilterPanel
+                        filters={filters}
+                        updateFilter={updateFilter}
+                        removeFilter={removeFilter}
+                    />
+                )}
 
             </div>
             </div>

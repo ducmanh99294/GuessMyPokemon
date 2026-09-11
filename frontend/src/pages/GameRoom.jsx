@@ -96,7 +96,6 @@ function doGuess(pokemon, targetPlayerId) {
         setShowTargetModal(false);
         doGuess(pendingGuess, targetPlayerId);
         setPendingGuess(null);
-        console.log(pendingGuess, targetPlayerId)
     }
 
     function leaveRoom() {
@@ -303,10 +302,6 @@ function handleGuess(pokemon) {
                         );
                         return;
                     }
-
-                    console.log(
-                        "Reconnected to room"
-                    );
                 }
             );
         }
@@ -338,11 +333,6 @@ function handleGuess(pokemon) {
                         );
                         return;
                     }
-
-                    console.log(
-                        "🎮 GameRoom reconnected:",
-                        response
-                    );
 
                     if (response.gameState) {
                         setGameState(response.gameState);
@@ -426,15 +416,6 @@ useEffect(() => {
         totalScore,
         revealedPokemon
     }) {
-        console.log("=== PLAYER GUESS RESULT ===");
-        console.log("Guesser:", playerId);
-        console.log("Target:", targetPlayerId);
-        console.log("Correct:", correct);
-        console.log("Total score:", totalScore);
-        console.log(
-            "Revealed Pokemon:",
-            revealedPokemon
-        );
 
         if (!correct) return;
 
@@ -492,10 +473,10 @@ function EffectivenessPanel({ effectiveness }) {
     });
 
     const sections = [
-        { key: "super_effective", label: "not effective (x2+)", className: "weak" },
-        { key: "not_effective", label: "not effective", className: "resist" },
+        { key: "super_effective", label: "super_effective (x2+) (Weak when attack)", className: "weak" },
+        { key: "not_effective", label: "not effective (x1/2) (Super Effective when attack)", className: "resist" },
         { key: "no_effect", label: "no effect (x0)", className: "immune" },
-        // { key: "normal", label: "normal", className: "immune" }
+        { key: "effective", label: "normal (x1)", className: "normal" }
     ];
 
     return (
@@ -506,7 +487,7 @@ function EffectivenessPanel({ effectiveness }) {
                         <span className="eff-label">{label}</span>
                         <div className="eff-types">
                             {groups[key].map((type) => (
-                                <span key={type} className={`type-badge type-${type}`}>
+                                <span key={type} className={`type type-${type}`}>
                                     {type}
                                 </span>
                             ))}
@@ -728,10 +709,10 @@ return (
         <div className="my-pokemon-name">
             {gameState.myPokemon.name}
         </div>
-
+                                
         <div className="my-pokemon-types">
             {gameState.myPokemon.types?.map((type) => (
-                <span key={type} className={`type-badge type-${type}`}>
+                <span key={type} className={`type type-${type}`}>
                     {type}
                 </span>
             ))}
@@ -739,16 +720,23 @@ return (
 
         <div className="my-pokemon-tags">
             <span className="tag">Gen {gameState.myPokemon.generation}</span>
-            {gameState.myPokemon.legendary && <span className="tag legendary">Legendary</span>}
-            {gameState.myPokemon.mythical && <span className="tag mythical">Mythical</span>}
+            {gameState.myPokemon.legendary ? <span className="tag legendary">Legendary</span> : <span className="tag legendary">Not Legendary</span>}
+            {gameState.myPokemon.mythical ? <span className="tag mythical">Mythical</span> : <span className="tag mythical">Not Mythical</span>}
             {gameState.myPokemon.baby && <span className="tag">Baby</span>}
             <span className="tag">
                 {gameState.myPokemon.hasEvolution
-                    ? `${gameState.myPokemon.evolutionForms} forms`
+                    ? `has evolution`
                     : "No evolution"}
+                    
+            </span>
+            <span className="tag">
+                {gameState.myPokemon.hasEvolution
+                    ? `${gameState.myPokemon.evolutionForms} forms`
+                    : ""}
+                    
             </span>
         </div>
-
+        The effectiveness of each type on {gameState.myPokemon.name}
         <EffectivenessPanel effectiveness={gameState.myPokemon.effectiveness} />
     </div>
 ) : (
@@ -762,7 +750,7 @@ return (
         className="notes-textarea"
         value={notes}
         onChange={handleNotesChange}
-        placeholder="Ghi lại manh mối, suy luận..."
+        placeholder="Ghi chú..."
         rows={5}
     />    
 </div>
@@ -810,13 +798,6 @@ return (
         <ChatPanel
             roomId={gameState.roomId}
         />
-
-    </div>
-
-
-    {/* =================================================
-        FILTER
-    ================================================== */}
     <div className="filter-bar">
 
         <div
@@ -850,6 +831,13 @@ return (
         )}
 
     </div>
+    </div>
+
+
+    {/* =================================================
+        FILTER
+    ================================================== */}
+
 
 </div>
 

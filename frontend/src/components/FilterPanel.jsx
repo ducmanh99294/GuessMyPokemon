@@ -136,10 +136,6 @@ function FilterPanel({
 
     <div className="name-search-wrapper">
 
-        <span className="search-icon">
-            🔍
-        </span>
-
         <input
             type="text"
             value={filters.name || ""}
@@ -290,85 +286,86 @@ function FilterPanel({
 
             <section>
                 <h3>Special</h3>
-
-                <button
-                    type="button"
-                    className={
-                        filters.legendary === true ||
-                        filters.legendary === "true"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() => {
-
-                        const active =
+                <div className="Special-grid">
+                    <button
+                        type="button"
+                        className={
                             filters.legendary === true ||
-                            filters.legendary === "true";
-
-                        if (active) {
-                            handleRemoveFilter(
-                                "legendary"
-                            );
-                        } else {
-                            handleUpdateFilter(
-                                "legendary",
-                                true
-                            );
+                            filters.legendary === "true"
+                                ? "active"
+                                : ""
                         }
+                        onClick={() => {
 
-                    }}
-                >
-                    Legendary
-                </button>
+                            const active =
+                                filters.legendary === true ||
+                                filters.legendary === "true";
 
-                <button
-                    type="button"
-                    className={
-                        filters.mythical === true ||
-                        filters.mythical === "true"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() => {
+                            if (active) {
+                                handleRemoveFilter(
+                                    "legendary"
+                                );
+                            } else {
+                                handleUpdateFilter(
+                                    "legendary",
+                                    true
+                                );
+                            }
 
-                        const active =
+                        }}
+                    >
+                        Legendary
+                    </button>
+
+                    <button
+                        type="button"
+                        className={
                             filters.mythical === true ||
-                            filters.mythical === "true";
-
-                        if (active) {
-                            handleRemoveFilter(
-                                "mythical"
-                            );
-                        } else {
-                            handleUpdateFilter(
-                                "mythical",
-                                true
-                            );
+                            filters.mythical === "true"
+                                ? "active"
+                                : ""
                         }
+                        onClick={() => {
 
-                    }}
-                >
-                    Mythical
-                </button>
+                            const active =
+                                filters.mythical === true ||
+                                filters.mythical === "true";
 
-                <button
-                    type="button"
-                    className={
-                        filters.mega === true || filters.mega === "true"
-                            ? "active"
-                            : ""
-                    }
-                    onClick={() => {
-                        const active = filters.mega === true || filters.mega === "true";
-                        if (active) {
-                            handleRemoveFilter("mega");
-                        } else {
-                            handleUpdateFilter("mega", true);
+                            if (active) {
+                                handleRemoveFilter(
+                                    "mythical"
+                                );
+                            } else {
+                                handleUpdateFilter(
+                                    "mythical",
+                                    true
+                                );
+                            }
+
+                        }}
+                    >
+                        Mythical
+                    </button>
+
+                    <button
+                        type="button"
+                        className={
+                            filters.mega === true || filters.mega === "true"
+                                ? "active"
+                                : ""
                         }
-                    }}
-                >
-                    Mega
-                </button>
+                        onClick={() => {
+                            const active = filters.mega === true || filters.mega === "true";
+                            if (active) {
+                                handleRemoveFilter("mega");
+                            } else {
+                                handleUpdateFilter("mega", true);
+                            }
+                        }}
+                    >
+                        Mega
+                    </button>
+                </div>
             </section>
 
 
@@ -378,7 +375,6 @@ function FilterPanel({
 
             <section>
                 <h3>Evolution</h3>
-
                 <div className="evolution-options">
 
                     <button
@@ -445,7 +441,6 @@ function FilterPanel({
 
 
                 <div className="evolution-forms">
-
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
                         (forms) => {
 
@@ -501,7 +496,7 @@ function FilterPanel({
                 <div className="effectiveness-grid-container">
 
                     <EffectivenessGrid
-                        title="Effect"
+                        title="Normal"
                         icon=""
                         effect="effective"
                         filters={filters}

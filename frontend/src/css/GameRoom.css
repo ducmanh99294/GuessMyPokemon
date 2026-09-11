@@ -28,6 +28,25 @@ body {
     font-size: 14px;
 }
 
+.eff-types .type.type-normal,.my-pokemon-types .type.type-normal   { background: rgba(168, 168, 120, 0.18); color: #c6c6a7; }
+.eff-types .type.type-fire,.my-pokemon-types .type.type-fire     { background: rgba(240, 128, 48, 0.18);  color: #ff9d55; }
+.eff-types .type.type-water,.my-pokemon-types .type.type-water    { background: rgba(104, 144, 240, 0.18); color: #6890f0; }
+.eff-types .type.type-electric,.my-pokemon-types .type.type- { background: rgba(248, 208, 48, 0.18);  color: #f8d030; }
+.eff-types .type.type-grass,.my-pokemon-types .type.type-grass    { background: rgba(120, 200, 80, 0.18);  color: #78c850; }
+.eff-types .type.type-ice,.my-pokemon-types .type.type-ice      { background: rgba(152, 216, 216, 0.18); color: #98d8d8; }
+.eff-types .type.type-fighting,.my-pokemon-types .type.type-fighting { background: rgba(192, 48, 40, 0.18);   color: #e0524a; }
+.eff-types .type.type-poison,.my-pokemon-types .type.type-poison   { background: rgba(160, 64, 160, 0.18);  color: #c060c0; }
+.eff-types .type.type-ground,.my-pokemon-types .type.type-ground   { background: rgba(224, 192, 104, 0.18); color: #e0c068; }
+.eff-types .type.type-flying,.my-pokemon-types .type.type-flying   { background: rgba(168, 144, 240, 0.18); color: #a890f0; }
+.eff-types .type.type-psychic,.my-pokemon-types .type.type-psychic  { background: rgba(248, 88, 136, 0.18);  color: #f96b96; }
+.eff-types .type.type-bug,.my-pokemon-types .type.type-bug      { background: rgba(168, 184, 32, 0.18);  color: #a8b820; }
+.eff-types .type.type-rock,.my-pokemon-types .type.type-rock     { background: rgba(184, 160, 56, 0.18);  color: #b8a038; }
+.eff-types .type.type-ghost,.my-pokemon-types .type.type-ghost     { background: rgba(112, 88, 152, 0.18);  color: #9070b8; }
+.eff-types .type.type-dragon,.my-pokemon-types .type.type-dragon   { background: rgba(112, 56, 248, 0.18);  color: #8560f8; }
+.eff-types .type.type-dark,.my-pokemon-types .type.type-dark     { background: rgba(112, 88, 72, 0.18);   color: #8a7166; }
+.eff-types .type.type-steel,.my-pokemon-types .type.type-steel    { background: rgba(184, 184, 208, 0.18); color: #c4c4d8; }
+.eff-types .type.type-fairy,.my-pokemon-types .type.type-fairy    { background: rgba(238, 153, 172, 0.18); color: #ffb6c7; }
+
 /* ===== BACKGROUND ===== */
 .bg-layer {
     position: fixed;
@@ -258,7 +277,7 @@ body {
 /* ===== MAIN GRID (bản hợp nhất — DUY NHẤT) ===== */
 .game-grid {
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr) 480px;
+    grid-template-columns: 320px minmax(0, 1fr) 410px;
     grid-template-areas:
         "players pokedex chat"
         "players pokedex filter";
@@ -431,10 +450,13 @@ body {
 }
 
 .pokemon-card {
+    color: rgb(172, 172, 172);
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 14px;
-    padding: 8px 6px;
+    margin: 10px 0;
+    padding: 3px 6px;
+    min-height:20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -443,6 +465,11 @@ body {
     cursor: pointer;
     position: relative;
 }
+
+.pokemon-card button{
+    background: rgba(255, 255, 255, 0.09);
+}
+
 .pokemon-card:hover {
     transform: translateY(-3px);
     border-color: rgba(255, 255, 255, 0.08);
@@ -1356,6 +1383,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 16px;
     margin-bottom: 12px;
+    min-height:100%;
 }
 
 .my-pokemon-name {
@@ -1411,9 +1439,10 @@ body {
     background: rgba(255, 255, 255, 0.015);
 }
 
-.eff-row.weak { border-left: 3px solid #ff6b6b; }
-.eff-row.resist { border-left: 3px solid #4dc9ff; }
-.eff-row.immune { border-left: 3px solid #9b9b9b; }
+.eff-row.weak { border-left: 3px solid #6bff6e; }
+.eff-row.resist { border-left: 3px solid #ff4d4d; }
+.eff-row.immune { border-left: 3px solid #000000; }
+.eff-row.normal { border-left: 3px solid #d9d9d9; }
 
 .eff-label {
     font-size: 0.6rem;
@@ -1509,7 +1538,7 @@ body {
 
 @media (max-width: 1024px) {
     .game-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 100% 1fr 1fr;
         grid-template-areas:
             "players filter"
             "pokedex pokedex"
@@ -1584,7 +1613,7 @@ body {
 
     /* Chat mobile */
     .chat-section {
-        max-height: 340px;
+        max-height: 100%;
         padding: 12px 12px 10px;
     }
 
@@ -1687,6 +1716,8 @@ body {
         gap: 6px;
     }
     .pokemon-card {
+        min-height: 25px;
+        min-width: 45px;
         padding: 4px 4px;
     }
     .pokemon-card .sprite {
@@ -1702,7 +1733,7 @@ body {
         padding: 6px 16px;
     }
     .chat-section {
-        max-height: 300px;
+        max-height: 100%;
     }
     .filter-bar-header {
         font-size: 0.68rem;

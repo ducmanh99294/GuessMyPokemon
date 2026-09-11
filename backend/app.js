@@ -1,7 +1,7 @@
 require("dotenv").config();
 const allowedOrigins = [
     "http://localhost:5173",
-    "https://your-frontend.vercel.app"
+    "https://guess-my-pokemon.vercel.app"
 ];
 const express = require("express");
 const http = require("http");

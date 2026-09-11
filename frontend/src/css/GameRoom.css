@@ -1288,7 +1288,145 @@ body {
     transform: translateY(0);
 }
 
+.notes-textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: #f0f4ff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
 
+.notes-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+.notes-textarea:focus {
+    border-color: rgba(255, 215, 0, 0.2);
+}
+
+/* ===== REVEALED POKEMON MINI (bên cạnh player trong danh sách) ===== */
+.player-item {
+    position: relative; /* đảm bảo đã có sẵn, nếu chưa thêm */
+}
+
+.revealed-mini {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.06);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    animation: revealPop 0.3s ease-out;
+}
+
+.revealed-mini img {
+    width: 26px;
+    height: 26px;
+    image-rendering: pixelated;
+}
+
+@keyframes revealPop {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.my-pokemon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    margin-bottom: 12px;
+}
+
+.my-pokemon-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+    color: #f0f4ff;
+}
+
+.my-pokemon-types,
+.my-pokemon-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.my-pokemon-tags .tag {
+    font-size: 0.6rem;
+    padding: 2px 10px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.my-pokemon-tags .tag.legendary {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.my-pokemon-tags .tag.mythical {
+    color: #ff7ae0;
+    border-color: rgba(255, 122, 224, 0.2);
+    background: rgba(255, 122, 224, 0.06);
+}
+
+.effectiveness-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.eff-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.eff-row.weak { border-left: 3px solid #ff6b6b; }
+.eff-row.resist { border-left: 3px solid #4dc9ff; }
+.eff-row.immune { border-left: 3px solid #9b9b9b; }
+
+.eff-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.eff-types {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
 /* =========================================================
    ANIMATIONS
 ========================================================= */
@@ -1408,7 +1546,7 @@ body {
     }
 
     .players-panel {
-        max-height: 110px;
+        max-height: 810px;
     }
 
     .player-list {

@@ -18,7 +18,7 @@ const DEFAULT_FILTERS = {
 };
 
 const VALID_FILTER_KEYS = Object.keys(DEFAULT_FILTERS);
-
+console.log("🚀 gameManager.js loaded");
 class GameManager {
 
     calculateScore(cluesUsed, elapsedSeconds) {
@@ -240,20 +240,10 @@ class GameManager {
         };
     }
 
-    getPrivateGameState(
-        room,
-        playerId
-    ) {
-
-        const player =
-            roomManager.getPlayer(
-                room.roomId,
-                playerId
-            );
-
-        if (!player) {
-            return null;
-        }
+    getPrivateGameState(room, playerId) {
+        const player = roomManager.getPlayer(room.roomId, playerId);
+        console.log("player", player);
+        if (!player) return null;
 
         return {
             roomId: room.roomId,
@@ -265,12 +255,14 @@ class GameManager {
                     id: otherPlayer.id,
                     name: otherPlayer.name,
                     score: otherPlayer.score,
+                    revealedPokemon: otherPlayer.game.revealed,
                     finished:
                         otherPlayer.game.finished
                 })
             ),
 
             // Pokémon của chính mình
+            myPokemon: player.game.targetPokemon,
             // KHÔNG được gửi Pokémon của người khác
             hasSelectedPokemon:
                 !!player.game.targetPokemon,
@@ -341,8 +333,7 @@ class GameManager {
             String(targetPokemon.id).toLowerCase();
 
             if (isCorrect) {
-        // ⭐ Đánh dấu pokemon của targetPlayer đã bị lộ
-        targetPlayer.game.revealed = true;
+        targetPlayer.game.revealed = targetPokemon;
 
         const elapsedSeconds = Math.floor(
             (Date.now() - player.game.startTime) / 1000

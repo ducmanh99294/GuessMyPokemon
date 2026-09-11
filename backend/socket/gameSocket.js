@@ -169,79 +169,105 @@ function setupGameSocket(io) {
         // SELECT POKEMON
         // =========================================
 
-        socket.on(
-            "select_pokemon",
-            ({ roomId, pokemonId }, callback) => {
-
-                try {
-
-                    if (!roomId) {
-                        throw new Error("Room ID is required");
-                    }
-
-                    if (
-                        pokemonId === undefined ||
-                        pokemonId === null
-                    ) {
-                        throw new Error("Pokemon ID is required");
-                    }
-
-                    const result =
-                        gameManager.selectPokemon(
-                            roomId,
-                            socket.playerId, // ⭐ FIX
-                            pokemonId
-                        );
-
-                    const room = result.room;
-
-                    io.to(roomId).emit(
-                        "player_pokemon_selected",
-                        {
-                            playerId: socket.playerId // ⭐ FIX
-                        }
-                    );
-
-                    io.to(roomId).emit(
-                        "room_updated",
-                        gameManager.getPublicRoomState(room)
-                    );
-
-                    if (
-                        gameManager.allPlayersSelected(room)
-                    ) {
-
-                        gameManager.initializeGame(room);
-
-                        sendPrivateGameStates(
-                            io,
-                            room
-                        );
-
-                        console.log(
-                            `Game started in room ${roomId}`
-                        );
-                    }
-
-                    callback?.({
-                        success: true
-                    });
-
-                } catch (error) {
-
-                    console.error(
-                        "select_pokemon error:",
-                        error
-                    );
-
-                    callback?.({
-                        success: false,
-                        message: error.message
-                    });
-                }
+socket.on(
+    "select_pokemon",
+    ({ roomId, pokemonId }, callback) => {
+        console.log("🔥🔥🔥 select_pokemon HIT", { roomId, pokemonId });    
+        try {
+            if (!roomId) {
+                throw new Error("Room ID is required");
             }
-        );
 
+            if (
+                pokemonId === undefined ||
+                pokemonId === null
+            ) {
+                throw new Error("Pokemon ID is required");
+            }
+
+            const result =
+                gameManager.selectPokemon(
+                    roomId,
+                    socket.playerId,
+                    pokemonId
+                );
+
+            const room = result.room;
+
+            console.log("🎮 ROOM AFTER SELECT:");
+            room.players.forEach((player) => {
+                console.log({
+                    id: player.id,
+                    socketId: player.socketId,
+                    targetPokemon:
+                        player.game?.targetPokemon,
+                    hasSelectedPokemon:
+                        !!player.game?.targetPokemon
+                });
+            });
+
+            io.to(roomId).emit(
+                "player_pokemon_selected",
+                {
+                    playerId: socket.playerId
+                }
+            );
+
+            io.to(roomId).emit(
+                "room_updated",
+                gameManager.getPublicRoomState(room)
+            );
+
+            const allSelected =
+                gameManager.allPlayersSelected(room);
+
+            console.log(
+                "🎯 ALL PLAYERS SELECTED:",
+                allSelected
+            );
+
+            if (allSelected) {
+                console.log(
+                    "🔥🔥 ALL SELECTED → INITIALIZING GAME"
+                );
+
+                gameManager.initializeGame(room);
+
+                console.log(
+                    "🔥🔥 CALLING sendPrivateGameStates"
+                );
+
+                sendPrivateGameStates(
+                    io,
+                    room
+                );
+
+                console.log(
+                    "🔥🔥 sendPrivateGameStates DONE"
+                );
+
+                console.log(
+                    "Game started in room",
+                    roomId
+                );
+            }
+
+            callback?.({
+                success: true
+            });
+        } catch (error) {
+            console.error(
+                "select_pokemon error:",
+                error
+            );
+
+            callback?.({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+);
 
         // =========================================
         // LEAVE ROOM
@@ -345,6 +371,7 @@ function setupGameSocket(io) {
         socket.on(
             "reconnect_room",
             ({ roomId, playerId }, callback) => {
+                console.log("🔥🔥🔥 reconnect_room HIT", roomId, playerId);
                 try {
                     const room =
                         roomManager.getRoom(roomId);
@@ -414,95 +441,135 @@ function setupGameSocket(io) {
         // =============================================
         // GUESS POKEMON
         // =============================================
-        socket.on(
-            "guess_pokemon",
-            ({ roomId, pokemonId, targetPlayerId }, callback) => {
-                try {
-                    if (!roomId) {
-                        throw new Error(
-                            "Room ID is required"
-                        );
-                    }
-
-                    if (
-                        pokemonId === undefined ||
-                        pokemonId === null
-                    ) {
-                        throw new Error(
-                            "Pokemon ID is required"
-                        );
-                    }
-
-                    const result =
-                        gameManager.guessPokemon(
-                            roomId,
-                            socket.playerId,
-                            pokemonId,
-                            targetPlayerId
-                        );
-
-                    callback?.({
-                        success: true,
-                        result
-                    });
-
-                    if (result.gameFinished !== undefined) {
-                        const room = roomManager.getRoom(roomId);
-
-                        // ⭐ Broadcast cho CẢ PHÒNG, bao gồm cả target pokemon đã bị lộ
-                        io.to(roomId).emit(
-                            "player_guess_result",
-                            {
-                                playerId: socket.playerId,
-                                targetPlayerId: result.targetPlayerId || targetPlayerId, // ai bị đoán trúng
-                                correct: result.correct,
-                                revealedPokemon: result.correct ? result.targetPokemon : null, // ⭐ tên pokemon lộ ra nếu đúng
-                                score: result.score,
-                                totalScore: result.totalScore,
-                                guesses: result.guesses,
-                                solvedCount: result.solvedCount,
-                                totalTargets: result.totalTargets,
-                                playerFullyFinished: result.playerFullyFinished
-                            }
-                        );
-
-                        // Callback riêng cho người đoán vẫn giữ (để họ biết chi tiết ngay, không cần chờ broadcast)
-                        callback?.({
-                            success: true,
-                            result
-                        });
-
-                        if (result.gameFinished) {
-                            const scoreboard = gameManager.getFinalResults(room);
-                            io.to(roomId).emit("game_finished", scoreboard);
-                        }
-                    }
-
-                    if (result.gameFinished) {
-                        const scoreboard =
-                            gameManager.getFinalResults(room);
-
-                        io.to(roomId).emit(
-                            "game_finished",
-                            scoreboard
-                        );
-                    }
-
-                    console.log(
-                        `[GUESS] ${socket.id} guessed ${pokemonId} → ${
-                            result.correct
-                                ? "CORRECT"
-                                : "WRONG"
-                        }`
-                    );
-                } catch (error) {
-                    callback?.({
-                        success: false,
-                        message: error.message
-                    });
-                }
+socket.on(
+    "guess_pokemon",
+    ({ roomId, pokemonId, targetPlayerId }, callback) => {
+        try {
+            if (!roomId) {
+                throw new Error("Room ID is required");
             }
-        );
+
+            if (
+                pokemonId === undefined ||
+                pokemonId === null
+            ) {
+                throw new Error("Pokemon ID is required");
+            }
+
+            const result =
+                gameManager.guessPokemon(
+                    roomId,
+                    socket.playerId,
+                    pokemonId,
+                    targetPlayerId
+                );
+
+            console.log("🎯 GUESS RESULT:", result);
+            console.log(
+                "🏁 GAME FINISHED:",
+                result.gameFinished
+            );
+
+            // =========================================
+            // CALLBACK CHO NGƯỜI ĐOÁN
+            // =========================================
+
+            callback?.({
+                success: true,
+                result
+            });
+
+            // =========================================
+            // BROADCAST KẾT QUẢ CHO CẢ PHÒNG
+            // =========================================
+
+            io.to(roomId).emit(
+                "player_guess_result",
+                {
+                    playerId: socket.playerId,
+
+                    targetPlayerId:
+                        result.targetPlayerId ||
+                        targetPlayerId,
+
+                    correct: result.correct,
+
+                    revealedPokemon:
+                        result.correct
+                            ? result.targetPokemon
+                            : null,
+
+                    score: result.score,
+
+                    totalScore:
+                        result.totalScore,
+
+                    guesses:
+                        result.guesses,
+
+                    wrongGuesses:
+                        result.wrongGuesses || []
+                }
+            );
+
+            // =========================================
+            // GAME FINISHED
+            // =========================================
+
+            if (result.gameFinished) {
+
+                const room =
+                    roomManager.getRoom(roomId);
+
+                if (!room) {
+                    throw new Error(
+                        "Room not found"
+                    );
+                }
+
+                console.log(
+                    "🏆🏆🏆 GAME FINISHED:",
+                    roomId
+                );
+
+                const scoreboard =
+                    gameManager.getFinalResults(
+                        room
+                    );
+
+                console.log(
+                    "🏆 SCOREBOARD:",
+                    scoreboard
+                );
+
+                io.to(roomId).emit(
+                    "game_finished",
+                    scoreboard
+                );
+            }
+
+            console.log(
+                `[GUESS] ${socket.id} guessed ${pokemonId} → ${
+                    result.correct
+                        ? "CORRECT"
+                        : "WRONG"
+                }`
+            );
+
+        } catch (error) {
+
+            console.error(
+                "guess_pokemon error:",
+                error
+            );
+
+            callback?.({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+);
 
         // =============================================
         // USE CLUE
@@ -601,7 +668,9 @@ function setupGameSocket(io) {
 // =============================================
 
 function sendPrivateGameStates(io, room) {
-
+    console.log("🚨🚨 sendPrivateGameStates CALLED");
+    console.log("Room:", room.roomId);
+    console.log("Players:", room.players.length);
     for (const player of room.players) {
 
         if (!player.socketId) {

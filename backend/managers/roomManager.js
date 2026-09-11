@@ -113,6 +113,7 @@ class RoomManager {
                 cluesUsed: 0,
                 guesses: 0,
                 startTime: null,
+                revealed: null,
                 finished: false,
                 revealed: false
             }

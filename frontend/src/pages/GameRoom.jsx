@@ -25,6 +25,7 @@ import "../css/GameRoom.css";
 function GameRoom() {
     const [filtersOpen, setFiltersOpen] = useState(true); // ⭐ thêm state
     const { roomId } = useParams();
+    const [notes, setNotes] = useState("");
     const [wrongGuesses, setWrongGuesses] = useState(new Set());
     const [guessMessage, setGuessMessage] = useState("");
     const navigate = useNavigate();
@@ -49,24 +50,6 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         (player) =>
             player.id === gameState.targetPlayerId
     );
-
-    function handleGuess(pokemon) {
-        if (guessing || gameState.finished) return;
-
-        if (opponents.length > 1) {
-            // nhiều hơn 1 đối thủ -> mở popup chọn
-            setPendingGuess(pokemon);
-            setShowTargetModal(true);
-            return;
-        }
-
-        // chỉ có 1 đối thủ -> guess thẳng, không cần popup
-        const target = opponents[0];
-        const confirmed = window.confirm(`Guess ${pokemon.name}?`);
-        if (!confirmed) return;
-
-        doGuess(pokemon, target?.id);
-    }
 
 function doGuess(pokemon, targetPlayerId) {
     setGuessing(true);
@@ -108,11 +91,12 @@ function doGuess(pokemon, targetPlayerId) {
     );
 }
 
-    function confirmTargetSelection(targetPlayerId) {
+    function confirmTargetSelection(targetPlayerId,) {
         if (!pendingGuess) return;
         setShowTargetModal(false);
         doGuess(pendingGuess, targetPlayerId);
         setPendingGuess(null);
+        console.log(pendingGuess, targetPlayerId)
     }
 
     function leaveRoom() {
@@ -181,6 +165,17 @@ function doGuess(pokemon, targetPlayerId) {
         return () => clearInterval(interval);
     }, [cooldownUntil]);
 
+    useEffect(() => {
+        if (!roomId) return;
+        const saved = localStorage.getItem(`pokemon_notes_${roomId}`);
+        if (saved) setNotes(saved);
+    }, [roomId]);
+
+    function handleNotesChange(e) {
+        const value = e.target.value;
+        setNotes(value);
+        localStorage.setItem(`pokemon_notes_${roomId}`, value);
+    }
 function handleGuess(pokemon) {
     if (
         guessing ||
@@ -221,31 +216,49 @@ function handleGuess(pokemon) {
     doGuess(pokemon, target.id);
 }
 
-    useEffect(() => {
-        const handleGuessResult = (data) => {
-            if (data.correct) {
-                const pokemonName = data.revealedPokemon?.name || "???";
-                setGuessMessage(
-                    `${pokemonName} đã bị lộ! +${data.score} điểm`
-                );
-                setGuessMessageType("success");
-            } else {
-                setGuessMessage("Đoán sai!");
-                setGuessMessageType("error");
-            }
+    // useEffect(() => {
+    //     const handleGuessResult = (data) => {
+    //         if (data.correct) {
+    //             const pokemonName = data.revealedPokemon?.name || "???";
+    //             setGuessMessage(
+    //                 `${pokemonName} đã bị lộ! +${data.score} điểm`
+    //             );
+    //             setGuessMessageType("success");
+    //             if (data.targetPlayerId && data.revealedPokemon) {
+    //                 setGameState((prev) => {
+    //                     if (!prev) return prev;
 
-            setTimeout(() => {
-                setGuessMessage("");
-                setGuessMessageType("");
-            }, 2500);
-        };
+    //                     return {
+    //                         ...prev,
+    //                         players: prev.players.map((p) =>
+    //                             p.id === data.targetPlayerId
+    //                                 ? {
+    //                                     ...p,
+    //                                     finished: true,
+    //                                     revealedPokemon: data.revealedPokemon
+    //                                 }
+    //                                 : p
+    //                         )
+    //                     };
+    //                 });
+    //             }
+    //         } else {
+    //             setGuessMessage("Đoán sai!");
+    //             setGuessMessageType("error");
+    //         }
 
-        socket.on("player_guess_result", handleGuessResult);
+    //         setTimeout(() => {
+    //             setGuessMessage("");
+    //             setGuessMessageType("");
+    //         }, 2500);
+    //     };
 
-        return () => {
-            socket.off("player_guess_result", handleGuessResult);
-        };
-    }, []);
+    //     socket.on("player_guess_result", handleGuessResult);
+
+    //     return () => {
+    //         socket.off("player_guess_result", handleGuessResult);
+    //     };
+    // }, []);
 
     useEffect(() => {
         function handleGameFinished(result) {
@@ -405,19 +418,105 @@ function handleGuess(pokemon) {
         });
     }
 
-    useEffect(() => {
-        function handlePlayerGuessResult({ playerId, correct, totalScore }) {
-            if (!correct) return;
-            setGameState((prev) => prev && ({
+useEffect(() => {
+    function handlePlayerGuessResult({
+        playerId,
+        targetPlayerId,
+        correct,
+        totalScore,
+        revealedPokemon
+    }) {
+        console.log("=== PLAYER GUESS RESULT ===");
+        console.log("Guesser:", playerId);
+        console.log("Target:", targetPlayerId);
+        console.log("Correct:", correct);
+        console.log("Total score:", totalScore);
+        console.log(
+            "Revealed Pokemon:",
+            revealedPokemon
+        );
+
+        if (!correct) return;
+
+        setGameState((prev) => {
+            if (!prev) return prev;
+
+            return {
                 ...prev,
-                players: prev.players.map((p) =>
-                    p.id === playerId ? { ...p, score: totalScore, finished: true } : p
-                )
-            }));
-        }
-        socket.on("player_guess_result", handlePlayerGuessResult);
-        return () => socket.off("player_guess_result", handlePlayerGuessResult);
-    }, []);
+
+                players: prev.players.map((p) => {
+
+                    // Người đoán
+                    if (p.id === playerId) {
+                        return {
+                            ...p,
+                            score: totalScore
+                        };
+                    }
+
+                    // Người bị đoán
+                    if (p.id === targetPlayerId) {
+                        return {
+                            ...p,
+                            finished: true,
+                            revealedPokemon
+                        };
+                    }
+
+                    return p;
+                })
+            };
+        });
+    }
+
+    socket.on(
+        "player_guess_result",
+        handlePlayerGuessResult
+    );
+
+    return () => {
+        socket.off(
+            "player_guess_result",
+            handlePlayerGuessResult
+        );
+    };
+}, []);
+
+function EffectivenessPanel({ effectiveness }) {
+    if (!effectiveness) return null;
+
+    const groups = { super_effective: [], effective: [], not_effective: [], no_effect: [] };
+
+    Object.entries(effectiveness).forEach(([type, data]) => {
+        groups[data.category]?.push(type);
+    });
+
+    const sections = [
+        { key: "super_effective", label: "not effective (x2+)", className: "weak" },
+        { key: "not_effective", label: "not effective", className: "resist" },
+        { key: "no_effect", label: "no effect (x0)", className: "immune" },
+        // { key: "normal", label: "normal", className: "immune" }
+    ];
+
+    return (
+        <div className="effectiveness-panel">
+            {sections.map(({ key, label, className }) =>
+                groups[key].length > 0 ? (
+                    <div key={key} className={`eff-row ${className}`}>
+                        <span className="eff-label">{label}</span>
+                        <div className="eff-types">
+                            {groups[key].map((type) => (
+                                <span key={type} className={`type-badge type-${type}`}>
+                                    {type}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                ) : null
+            )}
+        </div>
+    );
+}
 
 if (!gameState) {
     return (
@@ -456,7 +555,7 @@ if (!gameState) {
             />
         );
     }
-
+    
 return (
     
     <>
@@ -559,7 +658,7 @@ return (
                     className={`player-card ${
                         player.connected === false
                             ? "offline"
-                            : ""
+                            : "online"
                     }`}
                 >
 
@@ -593,6 +692,15 @@ return (
                                 : "Đang chơi"}
 
                         </div>
+                        {player.revealedPokemon?.sprite && (
+                            <div className="revealed-mini">
+                                <img
+                                    src={player.revealedPokemon.sprite}
+                                    alt={player.revealedPokemon.name}
+                                    title={player.revealedPokemon.name}
+                                />
+                            </div>
+                        )}  
 
                     </div>
 
@@ -602,9 +710,62 @@ return (
 
         </div>
 
-    </div>
-    {/* ⭐ ĐÓNG players-panel ở đây, KHÔNG chứa ChatPanel nữa */}
 
+    <div className="panel-title" style={{ marginTop: "16px" }}>
+            Pokémon của bạn
+    </div>
+{gameState.myPokemon ? (
+    <div className="my-pokemon-card">
+        {gameState.myPokemon.sprite && (
+            <img
+                src={gameState.myPokemon.sprite}
+                alt={gameState.myPokemon.name}
+                width="72"
+                height="72"
+            />
+        )}
+
+        <div className="my-pokemon-name">
+            {gameState.myPokemon.name}
+        </div>
+
+        <div className="my-pokemon-types">
+            {gameState.myPokemon.types?.map((type) => (
+                <span key={type} className={`type-badge type-${type}`}>
+                    {type}
+                </span>
+            ))}
+        </div>
+
+        <div className="my-pokemon-tags">
+            <span className="tag">Gen {gameState.myPokemon.generation}</span>
+            {gameState.myPokemon.legendary && <span className="tag legendary">Legendary</span>}
+            {gameState.myPokemon.mythical && <span className="tag mythical">Mythical</span>}
+            {gameState.myPokemon.baby && <span className="tag">Baby</span>}
+            <span className="tag">
+                {gameState.myPokemon.hasEvolution
+                    ? `${gameState.myPokemon.evolutionForms} forms`
+                    : "No evolution"}
+            </span>
+        </div>
+
+        <EffectivenessPanel effectiveness={gameState.myPokemon.effectiveness} />
+    </div>
+) : (
+    <p className="player-status">Chưa có dữ liệu Pokémon.</p>
+)}
+
+    <div className="panel-title" style={{ marginTop: "16px" }}>
+        Ghi chú
+    </div>
+    <textarea
+        className="notes-textarea"
+        value={notes}
+        onChange={handleNotesChange}
+        placeholder="Ghi lại manh mối, suy luận..."
+        rows={5}
+    />    
+</div>
 
     {/* =================================================
         CENTER - POKEDEX
@@ -937,7 +1098,7 @@ return (
 {guessResult?.correct && (
     <div className="modal-overlay open">
         <div className="modal">
-            <h2>🎉 Đoán đúng!</h2>
+            <h2>Đoán đúng!</h2>
             <p>Bảng điểm phòng {gameState.roomId}</p>
 
             <div className="leaderboard">
@@ -958,6 +1119,29 @@ return (
                 </button>
                 <button className="btn btn-primary" onClick={() => setGuessResult(null)}>
                     Tiếp tục
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+{guessResult && !guessResult.correct && (
+    <div className="modal-overlay open">
+        <div className="modal">
+            <h2 style={{ color: "#ff6b6b" }}>
+                {guessResult.error ? "Không thể đoán" : "❌ Sai rồi!"}
+            </h2>
+            <p>
+                {guessResult.error
+                    ? guessResult.error
+                    : `${guessResult.guessedPokemon?.name} không phải Pokémon bí mật.`}
+            </p>
+            <div className="actions">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setGuessResult(null)}
+                >
+                    Đã hiểu
                 </button>
             </div>
         </div>

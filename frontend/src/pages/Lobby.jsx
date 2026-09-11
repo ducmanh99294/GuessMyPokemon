@@ -264,19 +264,49 @@ function leaveRoom() {
     |--------------------------------------------------------------------------
     */
 
-    if (!room) {
-        return (
-            <main>
+if (!room) {
+    return (
+        <main className="room-loading-page">
+            <div className="room-loading-card">
+
+                <div className="loading-pokeball">
+                    <div className="pokeball-line"></div>
+                    <div className="pokeball-center"></div>
+                </div>
+
                 <h1>Pokémon Guess</h1>
 
                 {error ? (
-                    <p>{error}</p>
+                    <>
+                        <p className="room-loading-error">
+                            {error}
+                        </p>
+
+                        <button
+                            className="room-retry-btn"
+                            onClick={() => window.location.reload()}
+                        >
+                            Thử lại
+                        </button>
+                    </>
                 ) : (
-                    <p>Đang kết nối vào phòng...</p>
+                    <>
+                        <p className="room-loading-text">
+                            Đang kết nối vào phòng...
+                        </p>
+
+                        <div className="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </>
                 )}
-            </main>
-        );
-    }
+
+            </div>
+        </main>
+    );
+}
 
     /*
     |--------------------------------------------------------------------------

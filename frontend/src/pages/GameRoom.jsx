@@ -9,6 +9,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../css/GameRoom.css";
     const DEFAULT_FILTERS = {
         type: [],
+        name: "",
         generation: null,
         legendary: null,
         mythical: null,
@@ -67,33 +68,48 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         doGuess(pokemon, target?.id);
     }
 
-    function doGuess(pokemon, targetPlayerId) {
-        setGuessing(true);
-        setGuessResult(null);
+function doGuess(pokemon, targetPlayerId) {
+    setGuessing(true);
+    setGuessResult(null);
 
-        socket.emit(
-            "guess_pokemon",
-            {
-                roomId: gameState.roomId,
-                pokemonId: pokemon.id,
-                targetPlayerId
-            },
-            (response) => {
-                setGuessing(false);
-                if (!response?.success) {
-                    setGuessResult({ correct: false, error: response?.message });
-                    return;
-                }
-                setGuessResult(response.result);
+    socket.emit(
+        "guess_pokemon",
+        {
+            roomId: gameState.roomId,
+            pokemonId: pokemon.id,
+            targetPlayerId
+        },
+        (response) => {
+            setGuessing(false);
 
-                if (!response.result.correct) {
-                    setWrongGuesses((prev) => new Set(prev).add(pokemon.id));
-                }
+            if (!response?.success) {
+                setGuessResult({
+                    correct: false,
+                    error: response?.message
+                });
+                return;
             }
-        );
-    }
+
+            const result = response.result;
+
+            setGuessResult(result);
+
+            // Cooldown sau mỗi lần đoán
+            setCooldownUntil(Date.now() + 3000);
+
+            // Nếu đoán sai thì cập nhật wrong guesses
+            if (!result.correct && result.wrongGuesses) {
+                setGameState((prev) => ({
+                    ...prev,
+                    wrongGuesses: result.wrongGuesses
+                }));
+            }
+        }
+    );
+}
 
     function confirmTargetSelection(targetPlayerId) {
+        if (!pendingGuess) return;
         setShowTargetModal(false);
         doGuess(pendingGuess, targetPlayerId);
         setPendingGuess(null);
@@ -165,44 +181,45 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         return () => clearInterval(interval);
     }, [cooldownUntil]);
 
-    function handleGuess(pokemon) {
-        if (guessing || gameState.finished || cooldownLeft > 0) {
-            return;
-        }
-
-        const confirmed = window.confirm(`Guess ${pokemon.name}?`);
-        if (!confirmed) return;
-
-        setGuessing(true);
-        setGuessResult(null);
-
-        socket.emit(
-            "guess_pokemon",
-            { roomId: gameState.roomId, pokemonId: pokemon.id },
-            (response) => {
-                setGuessing(false);
-
-                if (!response?.success) {
-                    setGuessResult({ correct: false, error: response?.message });
-                    return;
-                }
-
-                const result = response.result;
-                setGuessResult(result);
-
-                // ⭐ set cooldown sau mỗi lần đoán (đúng hoặc sai)
-                setCooldownUntil(Date.now() + 3000);
-
-                // ⭐ cập nhật danh sách loại vào gameState
-                if (!result.correct && result.wrongGuesses) {
-                    setGameState((prev) => prev && ({
-                        ...prev,
-                        wrongGuesses: result.wrongGuesses
-                    }));
-                }
-            }
-        );
+function handleGuess(pokemon) {
+    if (
+        guessing ||
+        gameState?.finished ||
+        cooldownLeft > 0
+    ) {
+        return;
     }
+
+    // Danh sách đối thủ chưa đoán đúng
+    const availableOpponents = (gameState?.players || []).filter(
+        (p) => p.id !== myPlayerId && !p.finished
+    );
+
+    // Không có đối thủ
+    if (availableOpponents.length === 0) {
+        return;
+    }
+
+    // Có nhiều hơn 1 đối thủ
+    // => mở modal cho người chơi chọn target
+    if (availableOpponents.length > 1) {
+        setPendingGuess(pokemon);
+        setShowTargetModal(true);
+        return;
+    }
+
+    // Chỉ có 1 đối thủ
+    // => xác nhận rồi đoán thẳng
+    const target = availableOpponents[0];
+
+    const confirmed = window.confirm(
+        `Guess ${pokemon.name} của ${target.name}?`
+    );
+
+    if (!confirmed) return;
+
+    doGuess(pokemon, target.id);
+}
 
     useEffect(() => {
         const handleGuessResult = (data) => {
@@ -402,14 +419,33 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         return () => socket.off("player_guess_result", handlePlayerGuessResult);
     }, []);
 
-    if (!gameState) {
-        return (
-            <main>
+if (!gameState) {
+    return (
+        <main className="room-loading-page">
+            <div className="room-loading-card">
+
+                <div className="loading-pokeball">
+                    <div className="pokeball-line"></div>
+                    <div className="pokeball-center"></div>
+                </div>
+
                 <h1>Pokémon Guess</h1>
-                <p>Đang tải game...</p>
-            </main>
-        );
-    }
+
+                <p className="room-loading-text">
+                    Đang tải game...
+                </p>
+
+                <div className="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+            </div>
+        </main>
+    );
+}
+
     if (gameFinished) {
         return (
             <GameResult

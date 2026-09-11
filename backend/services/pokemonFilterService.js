@@ -74,7 +74,17 @@ async function filterPokemon(filters = {}) {
     // =====================================================
 
     for (const metadata of pokemonList) {
+        // =================================================
+        // NAME
+        // =================================================
 
+        if (filters.name?.trim()) {
+            const keyword = filters.name.trim().toLowerCase();
+
+            candidates = candidates.filter((pokemon) =>
+                pokemon.name.toLowerCase().includes(keyword)
+            );
+        }
 
         // =================================================
         // TYPE

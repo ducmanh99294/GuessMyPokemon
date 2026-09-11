@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
-
 function formatTime(timestamp) {
     if (!timestamp) return "";
     const date = new Date(timestamp);

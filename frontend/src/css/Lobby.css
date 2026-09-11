@@ -694,6 +694,284 @@
       color: rgba(255, 215, 0, 0.2);
   }
 
+  /* =========================================================
+   ROOM LOADING
+========================================================= */
+
+.room-loading-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(75, 110, 255, 0.12),
+            transparent 45%
+        ),
+        #080b14;
+
+    color: #fff;
+}
+
+
+/* Card */
+
+.room-loading-card {
+    width: min(420px, calc(100% - 40px));
+    padding: 45px 35px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    background: rgba(18, 23, 38, 0.92);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.45),
+        0 0 40px rgba(80, 120, 255, 0.08);
+
+    backdrop-filter: blur(12px);
+
+    animation: loadingCardIn 0.45s ease-out;
+}
+
+
+/* Title */
+
+.room-loading-card h1 {
+    margin: 22px 0 8px;
+
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1px;
+
+    color: #ffffff;
+}
+
+.room-loading-text {
+    margin: 0;
+
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+
+/* Error */
+
+.room-loading-error {
+    margin: 10px 0 20px;
+
+    max-width: 320px;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    color: #ff6b6b;
+}
+
+
+/* =========================================================
+   POKEBALL LOADING
+========================================================= */
+
+.loading-pokeball {
+    width: 76px;
+    height: 76px;
+
+    position: relative;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        to bottom,
+        #ef4444 0%,
+        #ef4444 47%,
+        #171b27 47%,
+        #171b27 53%,
+        #f5f5f5 53%,
+        #f5f5f5 100%
+    );
+
+    border: 4px solid rgba(255, 255, 255, 0.9);
+
+    box-shadow:
+        0 0 25px rgba(239, 68, 68, 0.35);
+
+    animation: pokeballFloat 1.6s ease-in-out infinite;
+}
+
+
+/* Pokeball center */
+
+.pokeball-center {
+    position: absolute;
+
+    width: 22px;
+    height: 22px;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    border: 5px solid #171b27;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   LOADING DOTS
+========================================================= */
+
+.loading-dots {
+    display: flex;
+    gap: 7px;
+
+    margin-top: 20px;
+}
+
+.loading-dots span {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    opacity: 0.25;
+
+    animation: loadingDot 1.2s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+
+/* =========================================================
+   RETRY BUTTON
+========================================================= */
+
+.room-retry-btn {
+    margin-top: 5px;
+
+    padding: 11px 24px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #111827;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.room-retry-btn:hover {
+    transform: translateY(-2px);
+
+    background: #f3f4f6;
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.room-retry-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes loadingCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pokeballFloat {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-8px) rotate(8deg);
+    }
+}
+
+@keyframes loadingDot {
+    0%,
+    60%,
+    100% {
+        opacity: 0.25;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-4px);
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+    .room-loading-card {
+        padding: 35px 25px;
+    }
+
+    .room-loading-card h1 {
+        font-size: 24px;
+    }
+
+    .loading-pokeball {
+        width: 65px;
+        height: 65px;
+    }
+}
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
       .start-game-btn {

@@ -558,7 +558,7 @@ function setupGameSocket(io) {
                     io.to(roomId).emit("game_choosing", publicRoom); // vẫn OK khi gọi lặp lại
 
                     callback?.({ success: true });
-                } catch (error) {
+                filters.name} catch (error) {
                     callback?.({ success: false, message: error.message });
                 }
             }

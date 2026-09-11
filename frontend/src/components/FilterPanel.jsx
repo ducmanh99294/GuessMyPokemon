@@ -24,6 +24,7 @@ const TYPES = [
 
 const DEFAULT_FILTERS = {
     type: [],
+    name: "",
     generation: null,
     legendary: null,
     mythical: null,
@@ -125,6 +126,47 @@ function FilterPanel({
         <div className="filter-panel">
 
             <h2>Clues</h2>
+{/* =================================================
+    SEARCH BY NAME
+================================================= */}
+
+<section className="name-search-section">
+
+    <h3>Search Pokémon</h3>
+
+    <div className="name-search-wrapper">
+
+        <span className="search-icon">
+            🔍
+        </span>
+
+        <input
+            type="text"
+            value={filters.name || ""}
+            placeholder="Search by Pokémon name..."
+            onChange={(e) =>
+                handleUpdateFilter(
+                    "name",
+                    e.target.value
+                )
+            }
+        />
+
+        {filters.name && (
+            <button
+                type="button"
+                className="clear-search"
+                onClick={() =>
+                    handleRemoveFilter("name")
+                }
+            >
+                ×
+            </button>
+        )}
+
+    </div>
+
+</section>
 
             {/* =================================================
                 TYPE
@@ -520,6 +562,17 @@ function FilterPanel({
                 <h3>Active Clues</h3>
 
                 <div className="active-filters">
+
+                    {/* NAME */}
+
+                    {filters.name && (
+                        <FilterChip
+                            label={`Name: ${filters.name}`}
+                            onRemove={() =>
+                                handleRemoveFilter("name")
+                            }
+                        />
+                    )}
 
                     {/* TYPE */}
 

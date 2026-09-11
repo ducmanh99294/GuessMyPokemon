@@ -2,6 +2,7 @@ import ChatPanel from "../components/ChatPanel";
 import { useEffect, useState } from "react";
 import FilterPanel from "../components/FilterPanel";
 import PokemonList from "../components/PokemonList";
+import GameResult from "../components/GameResult";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { useNavigate, useParams } from "react-router-dom";
@@ -143,6 +144,18 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
     }
     
     useEffect(() => {
+        function handleGameChoosing() {
+            navigate(`/lobby/${roomId}`);
+        }
+
+        socket.on("game_choosing", handleGameChoosing);
+
+        return () => {
+            socket.off("game_choosing", handleGameChoosing);
+        };
+    }, [roomId, navigate]);
+
+    useEffect(() => {
         if (!cooldownUntil) return;
         const interval = setInterval(() => {
             const left = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
@@ -191,31 +204,31 @@ const [filters, setFilters] = useState(DEFAULT_FILTERS);
         );
     }
 
-useEffect(() => {
-    const handleGuessResult = (data) => {
-        if (data.correct) {
-            setGuessMessage(
-                `🎉 Người chơi đã đoán đúng! +${data.score} điểm`
-            );
-            setGuessMessageType("success");
-        } else {
-            setGuessMessage("❌ Đoán sai!");
-            setGuessMessageType("error");
-        }
+    useEffect(() => {
+        const handleGuessResult = (data) => {
+            if (data.correct) {
+                const pokemonName = data.revealedPokemon?.name || "???";
+                setGuessMessage(
+                    `${pokemonName} đã bị lộ! +${data.score} điểm`
+                );
+                setGuessMessageType("success");
+            } else {
+                setGuessMessage("Đoán sai!");
+                setGuessMessageType("error");
+            }
 
-        // Tự động ẩn sau 2 giây
-        setTimeout(() => {
-            setGuessMessage("");
-            setGuessMessageType("");
-        }, 2000);
-    };
+            setTimeout(() => {
+                setGuessMessage("");
+                setGuessMessageType("");
+            }, 2500);
+        };
 
-    socket.on("player_guess_result", handleGuessResult);
+        socket.on("player_guess_result", handleGuessResult);
 
-    return () => {
-        socket.off("player_guess_result", handleGuessResult);
-    };
-}, []);
+        return () => {
+            socket.off("player_guess_result", handleGuessResult);
+        };
+    }, []);
 
     useEffect(() => {
         function handleGameFinished(result) {

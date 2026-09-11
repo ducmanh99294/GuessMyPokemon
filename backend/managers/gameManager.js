@@ -185,6 +185,7 @@ class GameManager {
             player.game.guesses = 0;
             player.game.startTime = Date.now();
             player.game.finished = false;
+            player.game.revealed = false;
 
             // Hiện tại chọn player tiếp theo
             // để đoán sẽ xử lý ở bước sau.
@@ -231,7 +232,7 @@ class GameManager {
                         !!player.game.targetPokemon,
 
                     finished:
-                        player.game.finished
+                        player.game.revealed
                 })
             ),
 
@@ -290,7 +291,9 @@ class GameManager {
                 player.game.guesses,
             wrongGuesses: player.game.wrongGuesses,
             finished:
-                player.game.finished
+                player.game.finished,
+            
+            
         };
     }
 
@@ -321,6 +324,10 @@ class GameManager {
         if (!targetPlayer) throw new Error("Target player not found");
         if (targetPlayer.id === playerId) throw new Error("Cannot guess your own Pokemon");
 
+        if (targetPlayer.game.revealed) {
+            throw new Error("This player's Pokemon has already been revealed");
+        }
+
         const guessedPokemon = this.findPokemon(pokemonId);
         if (!guessedPokemon) throw new Error("Pokemon not found");
 
@@ -334,40 +341,40 @@ class GameManager {
             String(targetPokemon.id).toLowerCase();
 
             if (isCorrect) {
-            player.game.finished = true;
+        // ⭐ Đánh dấu pokemon của targetPlayer đã bị lộ
+        targetPlayer.game.revealed = true;
 
-            const elapsedTime =
-                Date.now() - player.game.startTime;
+        const elapsedSeconds = Math.floor(
+            (Date.now() - player.game.startTime) / 1000
+        );
 
-            const elapsedSeconds =
-                Math.floor(elapsedTime / 1000);
+        const score = this.calculateScore(
+            player.game.cluesUsed,
+            elapsedSeconds
+        );
 
-            const score = this.calculateScore(
-                player.game.cluesUsed,
-                elapsedSeconds
-            );
+        player.score += score;
 
-            player.score += score;
+        // ⭐ Game kết thúc khi TẤT CẢ người chơi đã bị lộ pokemon
+        const gameFinished = this.isGameFinished(room);
 
-            const gameFinished =
-                this.isGameFinished(room);
-
-            if (gameFinished) {
-                room.status = "finished";
-            }
-
-            return {
-                correct: true,
-                guessedPokemon,
-                targetPokemon,
-                score,
-                totalScore: player.score,
-                cluesUsed: player.game.cluesUsed,
-                guesses: player.game.guesses,
-                elapsedSeconds,
-                gameFinished
-            };
+        if (gameFinished) {
+            room.status = "finished";
         }
+
+        return {
+            correct: true,
+            guessedPokemon,
+            targetPokemon,
+            targetPlayerId: targetPlayer.id, 
+            score,
+            totalScore: player.score,
+            cluesUsed: player.game.cluesUsed,
+            guesses: player.game.guesses,
+            elapsedSeconds,
+            gameFinished
+        };
+    }
 
             if (!player.game.wrongGuesses.includes(guessedPokemon.id)) {
             player.game.wrongGuesses.push(guessedPokemon.id);
@@ -424,87 +431,87 @@ class GameManager {
         };
     }
 
-async updateFilters(
-    roomId,
-    playerId,
-    filters
-) {
-    const room =
-        roomManager.getRoom(roomId);
-
-    if (!room) {
-        throw new Error("Room not found");
-    }
-
-    if (room.status !== "playing") {
-        throw new Error(
-            "Game is not in progress"
-        );
-    }
-
-    const player =
-        roomManager.getPlayer(
-            roomId,
-            playerId
-        );
-
-    if (!player) {
-        throw new Error(
-            "Player not found"
-        );
-    }
-
-    if (player.game.finished) {
-        throw new Error(
-            "You have already finished"
-        );
-    }
-
-    if (
-        !filters ||
-        typeof filters !== "object"
+    async updateFilters(
+        roomId,
+        playerId,
+        filters
     ) {
-        throw new Error(
-            "Invalid filters"
-        );
-    }
+        const room =
+            roomManager.getRoom(roomId);
 
-    const updatedFilters = {
-        ...player.game.filters
-    };
-
-    for (const key of VALID_FILTER_KEYS) {
-        if (!(key in filters)) {
-            continue;
+        if (!room) {
+            throw new Error("Room not found");
         }
 
-        updatedFilters[key] =
-            filters[key];
+        if (room.status !== "playing") {
+            throw new Error(
+                "Game is not in progress"
+            );
+        }
+
+        const player =
+            roomManager.getPlayer(
+                roomId,
+                playerId
+            );
+
+        if (!player) {
+            throw new Error(
+                "Player not found"
+            );
+        }
+
+        if (player.game.finished) {
+            throw new Error(
+                "You have already finished"
+            );
+        }
+
+        if (
+            !filters ||
+            typeof filters !== "object"
+        ) {
+            throw new Error(
+                "Invalid filters"
+            );
+        }
+
+        const updatedFilters = {
+            ...player.game.filters
+        };
+
+        for (const key of VALID_FILTER_KEYS) {
+            if (!(key in filters)) {
+                continue;
+            }
+
+            updatedFilters[key] =
+                filters[key];
+        }
+
+        // Lưu filter
+        player.game.filters =
+            updatedFilters;
+
+        // ⭐ Lọc Pokémon
+        const candidates =
+            await pokemonFilterService.filterPokemon(
+                updatedFilters
+            );
+
+        // ⭐ Cập nhật candidates
+        player.game.candidates =
+            candidates;
+
+        return {
+            filters: player.game.filters,
+            candidates: player.game.candidates
+        };
     }
-
-    // Lưu filter
-    player.game.filters =
-        updatedFilters;
-
-    // ⭐ Lọc Pokémon
-    const candidates =
-        await pokemonFilterService.filterPokemon(
-            updatedFilters
-        );
-
-    // ⭐ Cập nhật candidates
-    player.game.candidates =
-        candidates;
-
-    return {
-        filters: player.game.filters,
-        candidates: player.game.candidates
-    };
-}
 
     isGameFinished(room) {
         return room.players.every(
-            player => player.game.finished
+            player => player.game.revealed
         );
     }
 
@@ -549,31 +556,26 @@ async updateFilters(
     }
 
     rematch(roomId, playerId) {
-        const room =
-            roomManager.getRoom(roomId);
+        const room = roomManager.getRoom(roomId);
 
         if (!room) {
-            throw new Error(
-                "Room not found"
-            );
+            throw new Error("Room not found");
+        }
+
+        const player = roomManager.getPlayer(roomId, playerId);
+
+        if (!player) {
+            throw new Error("Player not found");
+        }
+
+        // ⭐ Nếu phòng đã được rematch bởi người khác trước đó (status đã chuyển sang "choosing"),
+        // coi như thành công luôn, không throw lỗi và không reset lại lần nữa.
+        if (room.status === "choosing") {
+            return room;
         }
 
         if (room.status !== "finished") {
-            throw new Error(
-                "Game has not finished"
-            );
-        }
-
-        const player =
-            roomManager.getPlayer(
-                roomId,
-                playerId
-            );
-
-        if (!player) {
-            throw new Error(
-                "Player not found"
-            );
+            throw new Error("Game has not finished");
         }
 
         for (const currentPlayer of room.players) {
@@ -587,9 +589,6 @@ async updateFilters(
                 legendary: null,
                 mythical: null,
                 hasEvolution: null,
-                mega: null,
-                wrongGuesses: [],      
-                lastGuessAt: null,
                 evolutionForms: null,
                 effective: [],
                 noEffect: [],
@@ -601,6 +600,7 @@ async updateFilters(
             currentPlayer.game.guesses = 0;
             currentPlayer.game.startTime = null;
             currentPlayer.game.finished = false;
+            currentPlayer.game.revealed = false; // ⭐ nhớ reset field này nếu đã thêm từ trước
         }
 
         room.status = "choosing";

@@ -1,4 +1,5 @@
 import socket from "../socket/socket";
+import "../css/GameResult.css";
 
 function GameResult({
     result,
@@ -25,100 +26,109 @@ function GameResult({
     }
 
     return (
+        <div className="result-page">
         <main className="game-result">
-            <header>
+
+            <header className="result-header">
+                <div className="trophy-icon">🏆</div>
                 <h1>Game Finished!</h1>
-                <p>
-                    Everyone has finished the game.
-                </p>
+                <p>Tất cả Pokémon bí mật đã bị lộ.</p>
             </header>
 
             <section className="scoreboard">
-                <h2>Scoreboard</h2>
+                <h2>Bảng xếp hạng</h2>
 
-                {result.players.map(
-                    (player, index) => (
-                        <div
-                            key={player.id}
-                            className="score-row"
-                        >
-                            <span className="rank">
-                                #{index + 1}
-                            </span>
+                <div className="score-list">
+                    {result.players.map(
+                        (player, index) => (
+                            <div
+                                key={player.id}
+                                className={`score-row ${
+                                    index === 0 ? "first" : ""
+                                }`}
+                            >
+                                <span className="rank">
+                                    {index === 0 && "🥇"}
+                                    {index === 1 && "🥈"}
+                                    {index === 2 && "🥉"}
+                                    {index > 2 && `#${index + 1}`}
+                                </span>
 
-                            <div className="player-info">
-                                <strong>
-                                    {player.name}
+                                <div className="player-info">
+                                    <strong>{player.name}</strong>
+
+                                    <small>
+                                        {player.cluesUsed} clues
+                                        {" • "}
+                                        {player.guesses} guesses
+                                    </small>
+                                </div>
+
+                                <strong className="score">
+                                    {player.score}
+                                    <span className="score-unit">pts</span>
                                 </strong>
-
-                                <small>
-                                    {player.cluesUsed} clues
-                                    {" • "}
-                                    {player.guesses} guesses
-                                </small>
                             </div>
-
-                            <strong className="score">
-                                {player.score}
-                            </strong>
-                        </div>
-                    )
-                )}
+                        )
+                    )}
+                </div>
             </section>
 
             <section className="revealed-pokemon">
-                <h2>Pokémon Revealed</h2>
+                <h2>Pokémon đã lộ diện</h2>
 
-                {result.players.map(
-                    (player) => (
-                        <div
-                            key={player.id}
-                            className="revealed-player"
-                        >
-                            <h3>
-                                {player.name}
-                            </h3>
+                <div className="revealed-grid">
+                    {result.players.map(
+                        (player) => (
+                            <div
+                                key={player.id}
+                                className="revealed-card"
+                            >
+                                <div className="revealed-sprite">
+                                    {player.targetPokemon?.sprite ? (
+                                        <img
+                                            src={player.targetPokemon.sprite}
+                                            alt={player.targetPokemon.name}
+                                        />
+                                    ) : (
+                                        <span className="no-sprite">?</span>
+                                    )}
+                                </div>
 
-                            {player.targetPokemon
-                                ?.sprite && (
-                                <img
-                                    src={
-                                        player
-                                            .targetPokemon
-                                            .sprite
-                                    }
-                                    alt={
-                                        player
-                                            .targetPokemon
-                                            .name
-                                    }
-                                />
-                            )}
+                                <div className="revealed-name">
+                                    {player.targetPokemon?.name || "???"}
+                                </div>
 
-                            <strong>
-                                {
-                                    player
-                                        .targetPokemon
-                                        ?.name
-                                }
-                            </strong>
-                        </div>
-                    )
-                )}
+                                <div className="revealed-owner">
+                                    của {player.name}
+                                </div>
+                            </div>
+                        )
+                    )}
+                </div>
             </section>
 
             <div className="result-actions">
                 <button
+                    className="btn-rematch"
                     onClick={handleRematch}
                 >
-                    Rematch
+                    <i className="fas fa-redo"></i>
+                    Chơi lại
                 </button>
 
-                <button onClick={onLeave}>
-                    Leave Room
+                <button
+                    className="btn-leave"
+                    onClick={onLeave}
+                >
+                    <i className="fas fa-sign-out-alt"></i>
+                    Rời phòng
                 </button>
             </div>
+
         </main>
+        </div>
+
     );
 }
 

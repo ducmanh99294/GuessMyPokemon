@@ -446,38 +446,37 @@ function setupGameSocket(io) {
                         result
                     });
 
-                    const room =
-                        roomManager.getRoom(roomId);
+                    if (result.gameFinished !== undefined) {
+                        const room = roomManager.getRoom(roomId);
 
-                    /*
-                    * Chỉ gửi kết quả public,
-                    * không gửi targetPokemon của người khác.
-                    */
+                        // ⭐ Broadcast cho CẢ PHÒNG, bao gồm cả target pokemon đã bị lộ
+                        io.to(roomId).emit(
+                            "player_guess_result",
+                            {
+                                playerId: socket.playerId,
+                                targetPlayerId: result.targetPlayerId || targetPlayerId, // ai bị đoán trúng
+                                correct: result.correct,
+                                revealedPokemon: result.correct ? result.targetPokemon : null, // ⭐ tên pokemon lộ ra nếu đúng
+                                score: result.score,
+                                totalScore: result.totalScore,
+                                guesses: result.guesses,
+                                solvedCount: result.solvedCount,
+                                totalTargets: result.totalTargets,
+                                playerFullyFinished: result.playerFullyFinished
+                            }
+                        );
 
-                    io.to(roomId).emit(
-                        "player_guess_result",
-                        {
-                            playerId: socket.playerId,
-                            correct: result.correct,
-                            score: result.score,
-                            totalScore: result.totalScore,
-                            guesses: result.guesses,
-                            finished: roomManager
-                                .getPlayer(
-                                    roomId,
-                                    socket.id
-                                )
-                                ?.game.finished
+                        // Callback riêng cho người đoán vẫn giữ (để họ biết chi tiết ngay, không cần chờ broadcast)
+                        callback?.({
+                            success: true,
+                            result
+                        });
+
+                        if (result.gameFinished) {
+                            const scoreboard = gameManager.getFinalResults(room);
+                            io.to(roomId).emit("game_finished", scoreboard);
                         }
-                    );
-
-                    /*
-                    * Gửi private result cho người đoán.
-                    */
-                    io.to(socket.id).emit(
-                        "guess_result",
-                        result
-                    );
+                    }
 
                     if (result.gameFinished) {
                         const scoreboard =
@@ -553,31 +552,14 @@ function setupGameSocket(io) {
             "rematch",
             ({ roomId }, callback) => {
                 try {
-                    const room =
-                        gameManager.rematch(
-                            roomId,
-                            socket.playerId
-                        );
+                    const room = gameManager.rematch(roomId, socket.playerId);
+                    const publicRoom = gameManager.getPublicRoomState(room);
 
-                    const publicRoom =
-                        gameManager.getPublicRoomState(
-                            room
-                        );
+                    io.to(roomId).emit("game_choosing", publicRoom); // vẫn OK khi gọi lặp lại
 
-                    io.to(roomId).emit(
-                        "game_choosing",
-                        publicRoom
-                    );
-
-                    callback?.({
-                        success: true
-                    });
-
+                    callback?.({ success: true });
                 } catch (error) {
-                    callback?.({
-                        success: false,
-                        message: error.message
-                    });
+                    callback?.({ success: false, message: error.message });
                 }
             }
         );

@@ -1439,8 +1439,8 @@ body {
     background: rgba(255, 255, 255, 0.015);
 }
 
-.eff-row.weak { border-left: 3px solid #6bff6e; }
-.eff-row.resist { border-left: 3px solid #ff4d4d; }
+.eff-row.weak { border-left: 3px solid #ff4d4d; }
+.eff-row.resist { border-left: 3px solid #6bff6e; }
 .eff-row.immune { border-left: 3px solid #000000; }
 .eff-row.normal { border-left: 3px solid #d9d9d9; }
 

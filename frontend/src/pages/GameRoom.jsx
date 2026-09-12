@@ -473,8 +473,8 @@ function EffectivenessPanel({ effectiveness }) {
     });
 
     const sections = [
-        { key: "super_effective", label: "super_effective (x2+) (Weak when attack)", className: "weak" },
-        { key: "not_effective", label: "not effective (x1/2) (Super Effective when attack)", className: "resist" },
+        { key: "super_effective", label: "not effective (x1/2) (Weak when attack)", className: "weak" },
+        { key: "not_effective", label: "super_effective (x2+) (Super Effective when attack)", className: "resist" },
         { key: "no_effect", label: "no effect (x0)", className: "immune" },
         { key: "effective", label: "normal (x1)", className: "normal" }
     ];

@@ -18,7 +18,7 @@ const DEFAULT_FILTERS = {
 };
 
 const VALID_FILTER_KEYS = Object.keys(DEFAULT_FILTERS);
-console.log("🚀 gameManager.js loaded");
+const MAX_WRONG_GUESSES = 5;
 class GameManager {
 
     calculateScore(cluesUsed, elapsedSeconds) {
@@ -186,6 +186,8 @@ class GameManager {
             player.game.startTime = Date.now();
             player.game.finished = false;
             player.game.revealed = false;
+            player.game.totalWrongGuesses = 0;
+            player.game.wrongGuessesByTarget= {};
 
             // Hiện tại chọn player tiếp theo
             // để đoán sẽ xử lý ở bước sau.
@@ -242,7 +244,6 @@ class GameManager {
 
     getPrivateGameState(room, playerId) {
         const player = roomManager.getPlayer(room.roomId, playerId);
-        console.log("player", player);
         if (!player) return null;
 
         return {
@@ -255,15 +256,15 @@ class GameManager {
                     id: otherPlayer.id,
                     name: otherPlayer.name,
                     score: otherPlayer.score,
-                    revealedPokemon: otherPlayer.game.revealed,
+                    revealedPokemon: otherPlayer.game.revealed
+                        ? otherPlayer.game.targetPokemon  
+                        : null,
                     finished:
                         otherPlayer.game.finished
                 })
             ),
 
-            // Pokémon của chính mình
             myPokemon: player.game.targetPokemon,
-            // KHÔNG được gửi Pokémon của người khác
             hasSelectedPokemon:
                 !!player.game.targetPokemon,
 
@@ -281,7 +282,7 @@ class GameManager {
 
             guesses:
                 player.game.guesses,
-            wrongGuesses: player.game.wrongGuesses,
+            wrongGuesses: room.wrongGuesses || [],
             finished:
                 player.game.finished,
             
@@ -289,51 +290,49 @@ class GameManager {
         };
     }
 
-    guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
-        const room = roomManager.getRoom(roomId);
-        if (!room) throw new Error("Room not found");
-        if (room.status !== "playing") throw new Error("Game is not in progress");
+guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
+    const room = roomManager.getRoom(roomId);
+    if (!room) throw new Error("Room not found");
+    if (room.status !== "playing") throw new Error("Game is not in progress");
 
-        const player = roomManager.getPlayer(roomId, playerId);
-        if (!player) throw new Error("Player not found");
-        if (player.game.finished) throw new Error("You have already finished");
+    const player = roomManager.getPlayer(roomId, playerId);
+    if (!player) throw new Error("Player not found");
 
-        const resolvedTargetId = targetPlayerId || player.game.targetPlayerId;
+    const resolvedTargetId = targetPlayerId || player.game.targetPlayerId;
 
-            const now = Date.now();
-
-        if (player.game.lastGuessAt) {
-            const elapsed = now - player.game.lastGuessAt;
-            if (elapsed < GUESS_COOLDOWN_MS) {
-                throw new Error(
-                    `Please wait ${Math.ceil((GUESS_COOLDOWN_MS - elapsed) / 1000)}s before guessing again`
-                );
-            }
+    const now = Date.now();
+    if (player.game.lastGuessAt) {
+        const elapsed = now - player.game.lastGuessAt;
+        if (elapsed < GUESS_COOLDOWN_MS) {
+            throw new Error(
+                `Please wait ${Math.ceil((GUESS_COOLDOWN_MS - elapsed) / 1000)}s before guessing again`
+            );
         }
-        player.game.lastGuessAt = now;
+    }
+    player.game.lastGuessAt = now;
 
-        const targetPlayer = roomManager.getPlayer(roomId, resolvedTargetId);
-        if (!targetPlayer) throw new Error("Target player not found");
-        if (targetPlayer.id === playerId) throw new Error("Cannot guess your own Pokemon");
+    const targetPlayer = roomManager.getPlayer(roomId, resolvedTargetId);
+    if (!targetPlayer) throw new Error("Target player not found");
+    if (targetPlayer.id === playerId) throw new Error("Cannot guess your own Pokemon");
 
-        if (targetPlayer.game.revealed) {
-            throw new Error("This player's Pokemon has already been revealed");
-        }
+    if (targetPlayer.game.revealed) {
+        throw new Error("This player's Pokemon has already been revealed");
+    }
 
-        const guessedPokemon = this.findPokemon(pokemonId);
-        if (!guessedPokemon) throw new Error("Pokemon not found");
+    const guessedPokemon = this.findPokemon(pokemonId);
+    if (!guessedPokemon) throw new Error("Pokemon not found");
 
-        const targetPokemon = targetPlayer.game.targetPokemon;
-        if (!targetPokemon) throw new Error("Target Pokemon has not been selected");
+    const targetPokemon = targetPlayer.game.targetPokemon;
+    if (!targetPokemon) throw new Error("Target Pokemon has not been selected");
 
-        player.game.guesses += 1;
+    player.game.guesses += 1;
 
-        const isCorrect =
-            String(guessedPokemon.id).toLowerCase() ===
-            String(targetPokemon.id).toLowerCase();
+    const isCorrect =
+        String(guessedPokemon.id).toLowerCase() ===
+        String(targetPokemon.id).toLowerCase();
 
-            if (isCorrect) {
-        targetPlayer.game.revealed = targetPokemon;
+    if (isCorrect) {
+        targetPlayer.game.revealed = true;
 
         const elapsedSeconds = Math.floor(
             (Date.now() - player.game.startTime) / 1000
@@ -346,9 +345,7 @@ class GameManager {
 
         player.score += score;
 
-        // ⭐ Game kết thúc khi TẤT CẢ người chơi đã bị lộ pokemon
         const gameFinished = this.isGameFinished(room);
-
         if (gameFinished) {
             room.status = "finished";
         }
@@ -357,29 +354,64 @@ class GameManager {
             correct: true,
             guessedPokemon,
             targetPokemon,
-            targetPlayerId: targetPlayer.id, 
+            targetPlayerId: targetPlayer.id,
             score,
             totalScore: player.score,
             cluesUsed: player.game.cluesUsed,
             guesses: player.game.guesses,
             elapsedSeconds,
-            gameFinished
+            gameFinished,
+            autoRevealed: false
         };
     }
 
-            if (!player.game.wrongGuesses.includes(guessedPokemon.id)) {
-            player.game.wrongGuesses.push(guessedPokemon.id);
-        }
-        return {
-            correct: false,
-            guessedPokemon,
-            score: 0,
-            totalScore: player.score,
-            cluesUsed: player.game.cluesUsed,
-            guesses: player.game.guesses,
-            wrongGuesses: player.game.wrongGuesses
-        };
+    // ===== ĐOÁN SAI =====
+
+    // ⭐ Track pokemon đã đoán sai (để frontend disable trên UI)
+    if (!room.wrongGuesses) {
+        room.wrongGuesses = [];
     }
+    if (!room.wrongGuesses.includes(guessedPokemon.id)) {
+        room.wrongGuesses.push(guessedPokemon.id);
+    }
+
+    // ⭐ Tổng số lần đoán sai của CHÍNH người này (không phân biệt theo target)
+    player.game.totalWrongGuesses = (player.game.totalWrongGuesses || 0) + 1;
+
+    let autoRevealed = false;
+    let gameFinished = false;
+    let revealedPokemon = null;
+
+    // ⭐ Đủ 5 lần sai -> CHÍNH người đoán bị lộ pokemon của mình (hình phạt)
+    if (player.game.totalWrongGuesses >= MAX_WRONG_GUESSES) {
+        player.game.revealed = true;
+        autoRevealed = true;
+        revealedPokemon = player.game.targetPokemon;
+
+        gameFinished = this.isGameFinished(room);
+        if (gameFinished) {
+            room.status = "finished";
+        }
+    }
+
+    return {
+        correct: false,
+        guessedPokemon,
+        guesserName: player.name,
+        targetPlayerId: targetPlayer.id,
+        revealedPlayerId: autoRevealed ? playerId : null, // ⭐ ai bị lộ (chính người đoán)
+        targetPokemon: autoRevealed ? revealedPokemon : null,
+        score: 0,
+        totalScore: player.score,
+        cluesUsed: player.game.cluesUsed,
+        guesses: player.game.guesses,
+        wrongGuesses: room.wrongGuesses,
+        totalWrongGuesses: player.game.totalWrongGuesses,
+        maxWrongGuesses: MAX_WRONG_GUESSES,
+        autoRevealed,
+        gameFinished
+    };
+}
 
     useClue(roomId, playerId, filterKey) {
         const room = roomManager.getRoom(roomId);
@@ -586,11 +618,13 @@ class GameManager {
                 notEffect: [],
                 superEffect: []
             };
-
+            currentPlayer.game.wrongGuessesByTarget = {};
             currentPlayer.game.cluesUsed = 0;
             currentPlayer.game.guesses = 0;
             currentPlayer.game.startTime = null;
             currentPlayer.game.finished = false;
+            currentPlayer.game.wrongGuesses = [];
+            currentPlayer.game.totalWrongGuesses = 0;
             currentPlayer.game.revealed = false; // ⭐ nhớ reset field này nếu đã thêm từ trước
         }
 

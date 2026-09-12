@@ -26,7 +26,6 @@ function GameRoom() {
     const [filtersOpen, setFiltersOpen] = useState(true); // ⭐ thêm state
     const { roomId } = useParams();
     const [notes, setNotes] = useState("");
-    const [wrongGuesses, setWrongGuesses] = useState(new Set());
     const [guessMessage, setGuessMessage] = useState("");
     const navigate = useNavigate();
     const [guessMessageType, setGuessMessageType] = useState("");
@@ -57,36 +56,22 @@ function doGuess(pokemon, targetPlayerId) {
 
     socket.emit(
         "guess_pokemon",
-        {
-            roomId: gameState.roomId,
-            pokemonId: pokemon.id,
-            targetPlayerId
-        },
+        { roomId: gameState.roomId, pokemonId: pokemon.id, targetPlayerId },
         (response) => {
             setGuessing(false);
 
             if (!response?.success) {
-                setGuessResult({
-                    correct: false,
-                    error: response?.message
-                });
+                setGuessResult({ correct: false, error: response?.message });
                 return;
             }
 
             const result = response.result;
-
             setGuessResult(result);
-
-            // Cooldown sau mỗi lần đoán
             setCooldownUntil(Date.now() + 3000);
 
-            // Nếu đoán sai thì cập nhật wrong guesses
-            if (!result.correct && result.wrongGuesses) {
-                setGameState((prev) => ({
-                    ...prev,
-                    wrongGuesses: result.wrongGuesses
-                }));
-            }
+            // ⭐ XOÁ toàn bộ đoạn setGameState(wrongGuesses) và setGuessMessage(autoRevealed) ở đây
+            // Lý do: handlePlayerGuessResult (broadcast) đã lo việc này cho TẤT CẢ mọi người,
+            // bao gồm cả chính người đoán — không cần set trùng lặp ở callback riêng nữa.
         }
     );
 }
@@ -175,89 +160,44 @@ function doGuess(pokemon, targetPlayerId) {
         setNotes(value);
         localStorage.setItem(`pokemon_notes_${roomId}`, value);
     }
-function handleGuess(pokemon) {
-    if (
-        guessing ||
-        gameState?.finished ||
-        cooldownLeft > 0
-    ) {
-        return;
+    function handleGuess(pokemon) {
+        if (
+            guessing ||
+            cooldownLeft > 0
+        ) {PokemonList
+            return;
+        }
+
+        // Danh sách đối thủ chưa đoán đúng
+        const availableOpponents = (gameState?.players || []).filter(
+            (p) => p.id !== myPlayerId && !p.finished
+        );
+
+        // Không có đối thủ
+        if (availableOpponents.length === 0) {
+            return;
+        }
+
+        // Có nhiều hơn 1 đối thủ
+        // => mở modal cho người chơi chọn target
+        if (availableOpponents.length > 1) {
+            setPendingGuess(pokemon);
+            setShowTargetModal(true);
+            return;
+        }
+
+        // Chỉ có 1 đối thủ
+        // => xác nhận rồi đoán thẳng
+        const target = availableOpponents[0];
+
+        const confirmed = window.confirm(
+            `Guess ${pokemon.name} của ${target.name}?`
+        );
+
+        if (!confirmed) return;
+
+        doGuess(pokemon, target.id);
     }
-
-    // Danh sách đối thủ chưa đoán đúng
-    const availableOpponents = (gameState?.players || []).filter(
-        (p) => p.id !== myPlayerId && !p.finished
-    );
-
-    // Không có đối thủ
-    if (availableOpponents.length === 0) {
-        return;
-    }
-
-    // Có nhiều hơn 1 đối thủ
-    // => mở modal cho người chơi chọn target
-    if (availableOpponents.length > 1) {
-        setPendingGuess(pokemon);
-        setShowTargetModal(true);
-        return;
-    }
-
-    // Chỉ có 1 đối thủ
-    // => xác nhận rồi đoán thẳng
-    const target = availableOpponents[0];
-
-    const confirmed = window.confirm(
-        `Guess ${pokemon.name} của ${target.name}?`
-    );
-
-    if (!confirmed) return;
-
-    doGuess(pokemon, target.id);
-}
-
-    // useEffect(() => {
-    //     const handleGuessResult = (data) => {
-    //         if (data.correct) {
-    //             const pokemonName = data.revealedPokemon?.name || "???";
-    //             setGuessMessage(
-    //                 `${pokemonName} đã bị lộ! +${data.score} điểm`
-    //             );
-    //             setGuessMessageType("success");
-    //             if (data.targetPlayerId && data.revealedPokemon) {
-    //                 setGameState((prev) => {
-    //                     if (!prev) return prev;
-
-    //                     return {
-    //                         ...prev,
-    //                         players: prev.players.map((p) =>
-    //                             p.id === data.targetPlayerId
-    //                                 ? {
-    //                                     ...p,
-    //                                     finished: true,
-    //                                     revealedPokemon: data.revealedPokemon
-    //                                 }
-    //                                 : p
-    //                         )
-    //                     };
-    //                 });
-    //             }
-    //         } else {
-    //             setGuessMessage("Đoán sai!");
-    //             setGuessMessageType("error");
-    //         }
-
-    //         setTimeout(() => {
-    //             setGuessMessage("");
-    //             setGuessMessageType("");
-    //         }, 2500);
-    //     };
-
-    //     socket.on("player_guess_result", handleGuessResult);
-
-    //     return () => {
-    //         socket.off("player_guess_result", handleGuessResult);
-    //     };
-    // }, []);
 
     useEffect(() => {
         function handleGameFinished(result) {
@@ -411,57 +351,86 @@ function handleGuess(pokemon) {
 useEffect(() => {
     function handlePlayerGuessResult({
         playerId,
+        guesserName,
+        guessedPokemon,
         targetPlayerId,
         correct,
+        revealedPlayerId,
+        autoRevealed,
         totalScore,
-        revealedPokemon
+        revealedPokemon,
+        wrongGuesses
     }) {
 
-        if (!correct) return;
+        console.log("[RAW EVENT] player_guess_result:", {
+            playerId, targetPlayerId, correct, revealedPlayerId,
+            autoRevealed, totalScore, revealedPokemon, wrongGuesses
+        });
 
+        // ⭐ XOÁ dòng "if (!correct && !autoRevealed) return;" — đây là nguyên nhân chặn mọi thứ
+
+        // Cập nhật state — luôn chạy, kể cả khi đoán sai bình thường (để đồng bộ wrongGuesses)
         setGameState((prev) => {
             if (!prev) return prev;
-
             return {
                 ...prev,
-
+                wrongGuesses: wrongGuesses || prev.wrongGuesses,
                 players: prev.players.map((p) => {
-
-                    // Người đoán
-                    if (p.id === playerId) {
-                        return {
-                            ...p,
-                            score: totalScore
-                        };
+                    if (p.id === playerId && correct) {
+                        return { ...p, score: totalScore };
                     }
-
-                    // Người bị đoán
-                    if (p.id === targetPlayerId) {
-                        return {
-                            ...p,
-                            finished: true,
-                            revealedPokemon
-                        };
+                    if (p.id === revealedPlayerId) {
+                        return { ...p, finished: true, revealedPokemon };
                     }
-
                     return p;
                 })
             };
         });
+
+        // ⭐ Trường hợp 1: đoán sai bình thường (chưa đủ 5 lần)
+        if (!correct && !autoRevealed) {
+            const isMe = playerId === myPlayerId;
+            const msg = isMe
+                ? `❌ Bạn đã đoán sai ${guessedPokemon?.name}!`
+                : `❌ ${guesserName || "Người chơi"} đã đoán sai ${guessedPokemon?.name}!`;
+
+            console.log("[SETTING MESSAGE]", msg);
+            setGuessMessage(msg);
+            setGuessMessageType("error");
+
+            setTimeout(() => {
+                setGuessMessage("");
+                setGuessMessageType("");
+            }, 2000);
+
+            return; // dừng ở đây, không chạy tiếp xuống autoRevealed bên dưới
+        }
+
+        // ⭐ Trường hợp 2: tự động lộ do đủ 5 lần sai
+        if (autoRevealed) {
+            const isMe = revealedPlayerId === myPlayerId;
+            setGuessMessage(
+                isMe
+                    ? `⚠️ Bạn đã đoán sai 5 lần! Pokémon của bạn (${revealedPokemon?.name}) đã bị lộ.`
+                    : `⚠️ ${revealedPokemon?.name || "???"} của một người chơi đã tự động bị lộ do đoán sai quá nhiều!`
+            );
+            setGuessMessageType("error");
+
+            setTimeout(() => {
+                setGuessMessage("");
+                setGuessMessageType("");
+            }, 3000);
+        }
+
+        // Trường hợp correct=true không cần banner riêng ở đây nếu bạn đã có modal "Đoán đúng!" xử lý qua guessResult
     }
 
-    socket.on(
-        "player_guess_result",
-        handlePlayerGuessResult
-    );
+    socket.on("player_guess_result", handlePlayerGuessResult);
 
     return () => {
-        socket.off(
-            "player_guess_result",
-            handlePlayerGuessResult
-        );
+        socket.off("player_guess_result", handlePlayerGuessResult);
     };
-}, []);
+}, [myPlayerId]);
 
 function EffectivenessPanel({ effectiveness }) {
     if (!effectiveness) return null;
@@ -473,8 +442,8 @@ function EffectivenessPanel({ effectiveness }) {
     });
 
     const sections = [
-        { key: "super_effective", label: "super_effective (x2+) (Weak when attack)", className: "weak" },
-        { key: "not_effective", label: "not effective (x1/2) (Super Effective when attack)", className: "resist" },
+        { key: "super_effective", label: "super_effective (x2+) (x1/2 when attack type...)", className: "weak" },
+        { key: "not_effective", label: "not effective (x1/2) (x2 when attack type...)", className: "resist" },
         { key: "no_effect", label: "no effect (x0)", className: "immune" },
         { key: "effective", label: "normal (x1)", className: "normal" }
     ];
@@ -498,7 +467,7 @@ function EffectivenessPanel({ effectiveness }) {
         </div>
     );
 }
-
+console.log(guessMessage)
 if (!gameState) {
     return (
         <main className="room-loading-page">
@@ -525,7 +494,6 @@ if (!gameState) {
         </main>
     );
 }
-
     if (gameFinished) {
         return (
             <GameResult
@@ -538,7 +506,6 @@ if (!gameState) {
     }
     
 return (
-    
     <>
         {/* BACKGROUND */}
         <div className="bg-layer" aria-hidden="true">
@@ -695,53 +662,53 @@ return (
     <div className="panel-title" style={{ marginTop: "16px" }}>
             Pokémon của bạn
     </div>
-{gameState.myPokemon ? (
-    <div className="my-pokemon-card">
-        {gameState.myPokemon.sprite && (
-            <img
-                src={gameState.myPokemon.sprite}
-                alt={gameState.myPokemon.name}
-                width="72"
-                height="72"
-            />
-        )}
+    {gameState.myPokemon ? (
+        <div className="my-pokemon-card">
+            {gameState.myPokemon.sprite && (
+                <img
+                    src={gameState.myPokemon.sprite}
+                    alt={gameState.myPokemon.name}
+                    width="72"
+                    height="72"
+                />
+            )}
 
-        <div className="my-pokemon-name">
-            {gameState.myPokemon.name}
-        </div>
-                                
-        <div className="my-pokemon-types">
-            {gameState.myPokemon.types?.map((type) => (
-                <span key={type} className={`type type-${type}`}>
-                    {type}
+            <div className="my-pokemon-name">
+                {gameState.myPokemon.name}
+            </div>
+                                    
+            <div className="my-pokemon-types">
+                {gameState.myPokemon.types?.map((type) => (
+                    <span key={type} className={`type type-${type}`}>
+                        {type}
+                    </span>
+                ))}
+            </div>
+
+            <div className="my-pokemon-tags">
+                <span className="tag">Gen {gameState.myPokemon.generation}</span>
+                {gameState.myPokemon.legendary ? <span className="tag legendary">Legendary</span> : <span className="tag legendary">Not Legendary</span>}
+                {gameState.myPokemon.mythical ? <span className="tag mythical">Mythical</span> : <span className="tag mythical">Not Mythical</span>}
+                {gameState.myPokemon.baby && <span className="tag">Baby</span>}
+                <span className="tag">
+                    {gameState.myPokemon.hasEvolution
+                        ? `has evolution`
+                        : "No evolution"}
+                        
                 </span>
-            ))}
+                <span className="tag">
+                    {gameState.myPokemon.hasEvolution
+                        ? `${gameState.myPokemon.evolutionForms} forms`
+                        : ""}
+                        
+                </span>
+            </div>
+            The effectiveness of each type on {gameState.myPokemon.name}
+            <EffectivenessPanel effectiveness={gameState.myPokemon.effectiveness} />
         </div>
-
-        <div className="my-pokemon-tags">
-            <span className="tag">Gen {gameState.myPokemon.generation}</span>
-            {gameState.myPokemon.legendary ? <span className="tag legendary">Legendary</span> : <span className="tag legendary">Not Legendary</span>}
-            {gameState.myPokemon.mythical ? <span className="tag mythical">Mythical</span> : <span className="tag mythical">Not Mythical</span>}
-            {gameState.myPokemon.baby && <span className="tag">Baby</span>}
-            <span className="tag">
-                {gameState.myPokemon.hasEvolution
-                    ? `has evolution`
-                    : "No evolution"}
-                    
-            </span>
-            <span className="tag">
-                {gameState.myPokemon.hasEvolution
-                    ? `${gameState.myPokemon.evolutionForms} forms`
-                    : ""}
-                    
-            </span>
-        </div>
-        The effectiveness of each type on {gameState.myPokemon.name}
-        <EffectivenessPanel effectiveness={gameState.myPokemon.effectiveness} />
-    </div>
-) : (
-    <p className="player-status">Chưa có dữ liệu Pokémon.</p>
-)}
+    ) : (
+        <p className="player-status">Chưa có dữ liệu Pokémon.</p>
+    )}
 
     <div className="panel-title" style={{ marginTop: "16px" }}>
         Ghi chú
@@ -779,8 +746,9 @@ return (
             loading={false}
             onGuess={handleGuess}
             guessing={guessing}
-            disabled={gameState.finished || cooldownLeft > 0}
-            eliminatedIds={gameState.wrongGuesses || []}
+            disabled={cooldownLeft > 0}
+            // eliminatedIds={gameState.wrongGuesses || []}
+            wrongGuesses={new Set(gameState.wrongGuesses || [])}
         />
 
     </div>
@@ -1113,16 +1081,21 @@ return (
     </div>
 )}
 
-{guessResult && !guessResult.correct && (
+{/* {guessResult && !guessResult.correct && (
     <div className="modal-overlay open">
         <div className="modal">
             <h2 style={{ color: "#ff6b6b" }}>
-                {guessResult.error ? "Không thể đoán" : "❌ Sai rồi!"}
+                {guessResult.error ? "Không thể đoán" : guessResult.autoRevealed
+                    ? "Pokémon của bạn đã bị lộ!"
+                    : "Sai rồi!"}
             </h2>
             <p>
                 {guessResult.error
                     ? guessResult.error
-                    : `${guessResult.guessedPokemon?.name} không phải Pokémon bí mật.`}
+                    : guessResult.autoRevealed
+                    ? `Bạn đã đoán sai ${guessResult.maxWrongGuesses} lần liên tiếp, nên ${guessResult.targetPokemon?.name} đã tự động bị lộ.`
+                    : `${guessResult.guessedPokemon?.name} không phải Pokémon của .`}
+
             </p>
             <div className="actions">
                 <button
@@ -1134,7 +1107,7 @@ return (
             </div>
         </div>
     </div>
-)}
+)} */}
     </>
 );
 }

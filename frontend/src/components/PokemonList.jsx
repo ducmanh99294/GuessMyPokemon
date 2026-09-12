@@ -12,23 +12,24 @@ function getBatchSize() {
 }
 
 function PokemonList({
-    pokemon = [], loading, onGuess, guessing, disabled, eliminatedIds = []
+    pokemon = [],
+    loading = false,
+    onGuess,
+    guessing = false,
+    disabled = false,
+    wrongGuesses = new Set() // ⭐ prop bị thiếu — thêm lại
 }) {
     const [batchSize, setBatchSize] = useState(getBatchSize());
     const [visibleCount, setVisibleCount] = useState(getBatchSize());
 
-    // ⭐ theo dõi resize để đổi batch size mobile/desktop
     useEffect(() => {
         function handleResize() {
-            const size = getBatchSize();
-            setBatchSize(size);
+            setBatchSize(getBatchSize());
         }
-
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // ⭐ reset về batch đầu mỗi khi danh sách pokemon thay đổi (lọc mới)
     useEffect(() => {
         setVisibleCount(batchSize);
     }, [pokemon, batchSize]);
@@ -52,36 +53,38 @@ function PokemonList({
     const visiblePokemon = pokemon.slice(0, visibleCount);
     const hasMore = visibleCount < pokemon.length;
 
-return (
-    <div className="pokemon-list-container">
+    return (
+        <div className="pokemon-list-container">
 
-        {hasMore && (
-            <button
-                type="button"
-                className="pokemon-load-more"
-                onClick={() =>
-                    setVisibleCount((prev) => prev + batchSize)
-                }
-            >
-                Xem thêm ({pokemon.length - visibleCount} còn lại)
-            </button>
-        )}
+            {hasMore && (
+                <button
+                    type="button"
+                    className="pokemon-load-more"
+                    onClick={() => setVisibleCount((prev) => prev + batchSize)}
+                >
+                    Xem thêm ({pokemon.length - visibleCount} còn lại)
+                </button>
+            )}
 
-        <div className="pokemon-list">
-            {visiblePokemon.map((item) => (
-                <PokemonCard
-                    key={item.id}
-                    pokemon={item}
-                    onGuess={onGuess}
-                    guessing={guessing}
-                    disabled={disabled || eliminatedIds.includes(item.id)}
-                    eliminated={eliminatedIds.includes(item.id)}
-                />
-            ))}
+            <div className="pokemon-list">
+                {visiblePokemon.map((item) => {
+                    const isWrong = wrongGuesses.has(item.id); // ⭐ khôi phục logic disable
+
+                    return (
+                        <PokemonCard
+                            key={item.id}
+                            pokemon={item}
+                            onGuess={onGuess}
+                            guessing={guessing}
+                            disabled={disabled || isWrong} // ⭐ disable nếu đã đoán sai
+                            eliminated={isWrong} // ⭐ để PokemonCard style mờ/gạch
+                        />
+                    );
+                })}
+            </div>
+
         </div>
-
-    </div>
-);
+    );
 }
 
 export default PokemonList;

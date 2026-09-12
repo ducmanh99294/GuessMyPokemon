@@ -70,7 +70,7 @@ class RoomManager {
                 this.createPlayer(host)
             ],
             chat: [],
-
+            wrongGuesses: [],
             createdAt: Date.now()
         };
 
@@ -115,7 +115,8 @@ class RoomManager {
                 startTime: null,
                 revealed: null,
                 finished: false,
-                revealed: false
+                revealed: false,
+                wrongGuessesByTarget: {}
             }
         };
     }

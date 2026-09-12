@@ -106,6 +106,7 @@
 
 .pokemon-types .type {
     padding: 2px 5px;
+    margin-bottom: 7px;
 
     border-radius: 4px;
 
@@ -119,15 +120,15 @@
 }
 
 .pokemon-guess-btn {
-    margin-top: 7px;
+    margin-bottom: 7px;
 
-    padding: 3px 9px;
+    padding: 5px 9px;
 
     border: 0;
     border-radius: 5px;
 
-    background: #ffd700;
-    color: #111827;
+    background: #ffd900;
+    color: rgb(248, 249, 255);
 
     font-size: 9px;
     font-weight: 700;
@@ -144,3 +145,33 @@
     cursor: not-allowed;
 }
 
+/* ===== BACKGROUND IMAGE (nền theo type/cặp type) ===== */
+.pokemon-card {
+    position: relative; /* cần thiết để ảnh nền absolute định vị đúng trong card */
+    z-index: 0;
+}
+
+.pokemon-card-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    opacity: 0.55;
+
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* Đảm bảo mọi nội dung khác nổi lên trên ảnh nền */
+.pokemon-card > .pokemon-id,
+.pokemon-card > .pokemon-image,
+.pokemon-card > h3,
+.pokemon-card > .pokemon-types,
+.pokemon-card > .pokemon-guess-btn {
+    position: relative;
+    z-index: 1;
+}

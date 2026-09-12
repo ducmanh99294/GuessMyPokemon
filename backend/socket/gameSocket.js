@@ -5,8 +5,6 @@ function setupGameSocket(io) {
 
     io.on("connection", (socket) => {
 
-        console.log("Player connected:", socket.id);
-
         // =========================================
         // CREATE ROOM
         // =========================================
@@ -97,10 +95,6 @@ function setupGameSocket(io) {
                         room: publicRoom
                     });
 
-                    console.log(
-                        `${name} joined room ${normalizedRoomId}`
-                    );
-
                 } catch (error) {
 
                     callback?.({
@@ -172,7 +166,6 @@ function setupGameSocket(io) {
 socket.on(
     "select_pokemon",
     ({ roomId, pokemonId }, callback) => {
-        console.log("🔥🔥🔥 select_pokemon HIT", { roomId, pokemonId });    
         try {
             if (!roomId) {
                 throw new Error("Room ID is required");
@@ -194,16 +187,7 @@ socket.on(
 
             const room = result.room;
 
-            console.log("🎮 ROOM AFTER SELECT:");
             room.players.forEach((player) => {
-                console.log({
-                    id: player.id,
-                    socketId: player.socketId,
-                    targetPokemon:
-                        player.game?.targetPokemon,
-                    hasSelectedPokemon:
-                        !!player.game?.targetPokemon
-                });
             });
 
             io.to(roomId).emit(
@@ -221,34 +205,12 @@ socket.on(
             const allSelected =
                 gameManager.allPlayersSelected(room);
 
-            console.log(
-                "🎯 ALL PLAYERS SELECTED:",
-                allSelected
-            );
-
             if (allSelected) {
-                console.log(
-                    "🔥🔥 ALL SELECTED → INITIALIZING GAME"
-                );
-
                 gameManager.initializeGame(room);
-
-                console.log(
-                    "🔥🔥 CALLING sendPrivateGameStates"
-                );
 
                 sendPrivateGameStates(
                     io,
                     room
-                );
-
-                console.log(
-                    "🔥🔥 sendPrivateGameStates DONE"
-                );
-
-                console.log(
-                    "Game started in room",
-                    roomId
                 );
             }
 
@@ -330,11 +292,6 @@ socket.on(
             "disconnect",
             () => {
 
-                console.log(
-                    "Player disconnected:",
-                    socket.id
-                );
-
                 const rooms =
                     roomManager.getAllRooms();
 
@@ -371,7 +328,6 @@ socket.on(
         socket.on(
             "reconnect_room",
             ({ roomId, playerId }, callback) => {
-                console.log("🔥🔥🔥 reconnect_room HIT", roomId, playerId);
                 try {
                     const room =
                         roomManager.getRoom(roomId);
@@ -464,12 +420,6 @@ socket.on(
                     targetPlayerId
                 );
 
-            console.log("🎯 GUESS RESULT:", result);
-            console.log(
-                "🏁 GAME FINISHED:",
-                result.gameFinished
-            );
-
             // =========================================
             // CALLBACK CHO NGƯỜI ĐOÁN
             // =========================================
@@ -482,20 +432,24 @@ socket.on(
             // =========================================
             // BROADCAST KẾT QUẢ CHO CẢ PHÒNG
             // =========================================
-
             io.to(roomId).emit(
                 "player_guess_result",
                 {
                     playerId: socket.playerId,
-
+                    guesserName: result.guesserName,
+                    guessedPokemon: result.guessedPokemon,
                     targetPlayerId:
                         result.targetPlayerId ||
                         targetPlayerId,
 
                     correct: result.correct,
 
+                    autoRevealed: result.autoRevealed || false,
+
+                    revealedPlayerId: result.autoRevealed ? result.revealedPlayerId : (result.correct ? result.targetPlayerId : null),
+                    
                     revealedPokemon:
-                        result.correct
+                        result.correct || result.autoRevealed
                             ? result.targetPokemon
                             : null,
 
@@ -527,34 +481,16 @@ socket.on(
                     );
                 }
 
-                console.log(
-                    "🏆🏆🏆 GAME FINISHED:",
-                    roomId
-                );
-
                 const scoreboard =
                     gameManager.getFinalResults(
                         room
                     );
-
-                console.log(
-                    "🏆 SCOREBOARD:",
-                    scoreboard
-                );
 
                 io.to(roomId).emit(
                     "game_finished",
                     scoreboard
                 );
             }
-
-            console.log(
-                `[GUESS] ${socket.id} guessed ${pokemonId} → ${
-                    result.correct
-                        ? "CORRECT"
-                        : "WRONG"
-                }`
-            );
 
         } catch (error) {
 
@@ -668,15 +604,9 @@ socket.on(
 // =============================================
 
 function sendPrivateGameStates(io, room) {
-    console.log("🚨🚨 sendPrivateGameStates CALLED");
-    console.log("Room:", room.roomId);
-    console.log("Players:", room.players.length);
     for (const player of room.players) {
 
         if (!player.socketId) {
-            console.log(
-                `⚠️ Player ${player.id} has no socketId`
-            );
             continue;
         }
 
@@ -685,10 +615,6 @@ function sendPrivateGameStates(io, room) {
                 room,
                 player.id
             );
-
-        console.log(
-            `📤 Sending game_started to ${player.id} via ${player.socketId}`
-        );
 
         io.to(player.socketId).emit(
             "game_started",
@@ -747,10 +673,6 @@ function leaveRoom(
         sendPrivateGameStates(
             io,
             room
-        );
-
-        console.log(
-            `Game started in room ${roomId}`
         );
     }
 }

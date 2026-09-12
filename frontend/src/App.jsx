@@ -11,7 +11,6 @@ import socket from "./socket/socket";
 function App() {
     useEffect(() => {
         function handleConnect() {
-            console.log("Connected:", socket.id);
         }
 
         function handleDisconnect(reason) {

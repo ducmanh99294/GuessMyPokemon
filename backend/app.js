@@ -98,7 +98,6 @@ function startServer() {
     pokemonService
         .preloadPokemonMetadata()
         .then(() => {
-            console.log("Pokemon metadata loaded successfully!");
         })
         .catch((error) => {
             console.error(

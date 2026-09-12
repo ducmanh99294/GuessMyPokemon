@@ -75,7 +75,7 @@ function ChatPanel({ roomId }) {
     return (
         <div className="chat-panel">
 
-            <div className="chat-messages" ref={messagesContainerRef}>
+            <div className="chat-messages">
                 {messages.length === 0 && (
                     <div className="chat-empty">
                         <span className="chat-empty-icon">💬</span>

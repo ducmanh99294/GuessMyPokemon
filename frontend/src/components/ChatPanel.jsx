@@ -11,7 +11,7 @@ function ChatPanel({ roomId }) {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [sending, setSending] = useState(false);
-    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const myPlayerId = getPlayerId();
 
     useEffect(() => {
@@ -34,7 +34,10 @@ function ChatPanel({ roomId }) {
 
     // ⭐ auto-scroll xuống cuối khi có tin nhắn mới
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        container.scrollTop = container.scrollHeight;
     }, [messages]);
 
     function sendMessage() {
@@ -72,7 +75,7 @@ function ChatPanel({ roomId }) {
     return (
         <div className="chat-panel">
 
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesContainerRef}>
                 {messages.length === 0 && (
                     <div className="chat-empty">
                         <span className="chat-empty-icon">💬</span>
@@ -105,7 +108,7 @@ function ChatPanel({ roomId }) {
                     );
                 })}
 
-                <div ref={messagesEndRef} />
+                <div/>
             </div>
 
             <div className="chat-input-area">

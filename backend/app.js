@@ -1,13 +1,16 @@
 require("dotenv").config();
+
 const allowedOrigins = [
     "http://localhost:5173",
     "https://guess-my-pokemon.vercel.app"
 ];
+
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
 
 const { Server } = require("socket.io");
+
 const setupGameSocket = require("./socket/gameSocket");
 const setupChatSocket = require("./socket/chatSocket");
 
@@ -18,6 +21,10 @@ const app = express();
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 5000;
+
+// ================================
+// SOCKET.IO
+// ================================
 
 const io = new Server(server, {
     cors: {
@@ -30,13 +37,22 @@ const io = new Server(server, {
 setupGameSocket(io);
 setupChatSocket(io);
 
+// ================================
+// MIDDLEWARE
+// ================================
+
 app.use(
     cors({
         origin: allowedOrigins,
         credentials: true
     })
 );
+
 app.use(express.json());
+
+// ================================
+// HEALTH CHECK
+// ================================
 
 app.get("/", (req, res) => {
     res.json({
@@ -52,37 +68,44 @@ app.get("/api/health", (req, res) => {
     });
 });
 
+// ================================
+// ROUTES
+// ================================
+
 app.use("/api/pokemon", pokemonRoutes);
 
 // ================================
 // START SERVER
 // ================================
 
-async function startServer() {
+function startServer() {
 
-    try {
+    // IMPORTANT:
+    // Open port immediately so Render can detect it.
+    server.listen(PORT, "0.0.0.0", () => {
 
-        await pokemonService.preloadPokemonMetadata();
+        console.log("=================================");
+        console.log("Pokemon Guess Backend");
+        console.log("=================================");
+        console.log(`Server running on port ${PORT}`);
+        console.log(`Health: /api/health`);
+        console.log("Socket.IO: Enabled");
+        console.log("=================================");
 
-        server.listen(PORT, () => {
+    });
 
-            console.log("=================================");
-            console.log("Pokemon Guess Backend");
-            console.log("=================================");
-            console.log(`Server: http://localhost:${PORT}`);
-            console.log(`Health: http://localhost:${PORT}/api/health`);
-            console.log("Socket.IO: Enabled");
-            console.log("=================================");
-
+    // Load Pokemon data AFTER server starts
+    pokemonService
+        .preloadPokemonMetadata()
+        .then(() => {
+            console.log("Pokemon metadata loaded successfully!");
+        })
+        .catch((error) => {
+            console.error(
+                "Failed to preload Pokemon metadata:",
+                error
+            );
         });
-
-    } catch (error) {
-
-        console.error("Failed to start server:", error);
-        process.exit(1);
-
-    }
-
 }
 
 startServer();

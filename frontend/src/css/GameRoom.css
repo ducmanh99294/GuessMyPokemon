@@ -31,7 +31,7 @@ body {
 .eff-types .type.type-normal,.my-pokemon-types .type.type-normal   { background: rgba(168, 168, 120, 0.18); color: #c6c6a7; }
 .eff-types .type.type-fire,.my-pokemon-types .type.type-fire     { background: rgba(240, 128, 48, 0.18);  color: #ff9d55; }
 .eff-types .type.type-water,.my-pokemon-types .type.type-water    { background: rgba(104, 144, 240, 0.18); color: #6890f0; }
-.eff-types .type.type-electric,.my-pokemon-types .type.type- { background: rgba(248, 208, 48, 0.18);  color: #f8d030; }
+.eff-types .type.type-electric,.my-pokemon-types .type.type-electric { background: rgba(248, 208, 48, 0.18);  color: #f8d030; }
 .eff-types .type.type-grass,.my-pokemon-types .type.type-grass    { background: rgba(120, 200, 80, 0.18);  color: #78c850; }
 .eff-types .type.type-ice,.my-pokemon-types .type.type-ice      { background: rgba(152, 216, 216, 0.18); color: #98d8d8; }
 .eff-types .type.type-fighting,.my-pokemon-types .type.type-fighting { background: rgba(192, 48, 40, 0.18);   color: #e0524a; }

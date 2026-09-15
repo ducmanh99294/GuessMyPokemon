@@ -141,10 +141,11 @@ function PokemonCard({
             <button
                 type="button"
                 className="pokemon-guess-btn"
-                disabled={disabled || guessing || eliminated}
+                // disabled={disabled || guessing || eliminated}
                 onClick={() => onGuess?.(pokemon)}
             >
-                {eliminated ? "Đã sai" : guessing ? "..." : "Guess"}
+                {/* {eliminated ? "Đã sai" : guessing ? "..." : "Guess"} */}
+                {"Guess"}
             </button>
 
         </div>

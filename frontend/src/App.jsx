@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Lobby from "./pages/Lobby";
 import GameRoom from "./pages/GameRoom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 // @ts-expect-error The socket module is currently implemented in JavaScript.
 import socket from "./socket/socket";
@@ -41,7 +43,9 @@ function App() {
 
                 {/* Phòng chơi */}
                 <Route path="/game/:roomId" element={<GameRoom />} />
-
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/solo" element={<Solo />} />
                 {/* Không tìm thấy trang */}
                 <Route
                     path="*"

@@ -1,0 +1,391 @@
+/* ===== SOLO MODE - đồng bộ vibe với Home.css ===== */
+
+.solo-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    color: #f0f4ff;
+    font-family: 'Inter', sans-serif;
+}
+
+.solo-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.solo-title {
+    font-size: 2rem;
+    letter-spacing: 4px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+}
+
+.solo-sub {
+    color: #a0aec0;
+    font-size: 0.95rem;
+}
+
+.solo-sub .highlight {
+    color: #ffd700;
+    font-weight: 700;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    margin: 16px auto 0;
+    max-width: 480px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.solo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .solo-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.solo-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(12px);
+}
+
+.solo-card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #ffd700;
+}
+
+.card-hint {
+    color: #a0aec0;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+
+.solo-rules {
+    list-style: none;
+    margin: 16px 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #cbd5e0;
+    font-size: 0.92rem;
+}
+
+.solo-rules li::before {
+    content: "▸ ";
+    color: #ffd700;
+}
+
+/* ===== Nút bấm ===== */
+.btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-solo-start {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f0f4ff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.btn-giveup {
+    margin-top: 20px;
+    background: transparent;
+    border: none;
+    color: #718096;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.btn-giveup:hover {
+    color: #e53e3e;
+}
+
+/* ===== Danh sách câu hỏi ===== */
+.question-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.question-btn {
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    color: #f0f4ff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.question-btn:hover:not(:disabled) {
+    background: rgba(255, 215, 0, 0.18);
+}
+
+.question-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.question-btn.asked {
+    opacity: 0.45;
+    border-style: dashed;
+}
+
+.gen-ask {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 16px;
+}
+
+.gen-ask label {
+    display: block;
+    font-size: 0.85rem;
+    color: #a0aec0;
+    margin-bottom: 8px;
+}
+
+.gen-ask-row {
+    display: flex;
+    gap: 10px;
+}
+
+.gen-ask-row select {
+    flex: 1;
+    background: #1a202c;
+    color: #f0f4ff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+}
+
+/* ===== Form đoán ===== */
+.guess-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #f0f4ff;
+    font-size: 0.95rem;
+}
+
+.form-input::placeholder {
+    color: #718096;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #ffd700;
+}
+
+/* ===== Lịch sử ===== */
+.history-title {
+    margin-top: 20px;
+}
+
+.history-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+}
+
+.history-q {
+    color: #cbd5e0;
+}
+
+.history-a {
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.history-a.yes {
+    background: rgba(72, 187, 120, 0.15);
+    color: #68d391;
+    border: 1px solid rgba(72, 187, 120, 0.4);
+}
+
+.history-a.no {
+    background: rgba(229, 62, 62, 0.12);
+    color: #fc8181;
+    border: 1px solid rgba(229, 62, 62, 0.4);
+}
+
+/* ===== Thông báo ===== */
+.solo-error {
+    background: rgba(229, 62, 62, 0.12);
+    border: 1px solid rgba(229, 62, 62, 0.4);
+    color: #fc8181;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.guess-feedback {
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.guess-feedback.wrong {
+    background: rgba(229, 62, 62, 0.1);
+    border: 1px solid rgba(229, 62, 62, 0.35);
+    color: #fc8181;
+}
+
+/* ===== Màn hình kết quả ===== */
+.solo-result {
+    text-align: center;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.result-win {
+    color: #68d391;
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+}
+
+.result-lose {
+    color: #fc8181;
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+}
+
+.secret-sprite {
+    width: 160px;
+    height: 160px;
+    image-rendering: pixelated;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 8px;
+    margin-bottom: 12px;
+}
+
+.secret-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-transform: capitalize;
+    color: #ffd700;
+}
+
+.secret-id {
+    color: #a0aec0;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+.secret-types {
+    color: #a0aec0;
+    margin: 8px 0 20px;
+    text-transform: capitalize;
+}
+
+.result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+}
+
+.result-stats div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.result-stats span {
+    font-size: 0.8rem;
+    color: #a0aec0;
+}
+
+.result-stats strong {
+    font-size: 1.5rem;
+}
+
+.result-stats .score {
+    color: #ffd700;
+}

@@ -13,9 +13,11 @@ const { Server } = require("socket.io");
 
 const setupGameSocket = require("./socket/gameSocket");
 const setupChatSocket = require("./socket/chatSocket");
+const setupSoloSocket = require("./socket/soloSocket");
 
 const pokemonRoutes = require("./routes/pokemonRoutes");
 const pokemonService = require("./services/pokemonService");
+const soloLeaderboardRoutes = require("./routes/soloLeaderboardRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +38,7 @@ const io = new Server(server, {
 
 setupGameSocket(io);
 setupChatSocket(io);
+setupSoloSocket(io);
 
 // ================================
 // MIDDLEWARE
@@ -73,6 +76,7 @@ app.get("/api/health", (req, res) => {
 // ================================
 
 app.use("/api/pokemon", pokemonRoutes);
+app.use("/api/solo/leaderboard", soloLeaderboardRoutes);
 
 // ================================
 // START SERVER

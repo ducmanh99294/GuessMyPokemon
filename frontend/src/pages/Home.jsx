@@ -4,10 +4,13 @@ import '../css/Home.css';
 import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Home() {
     const navigate = useNavigate();
             // ---- State ----
+            const { user, logout } = useAuth();
             // Create room
             const [createName, setCreateName] = useState('');
             const [isPrivate, setIsPrivate] = useState(false);
@@ -168,6 +171,19 @@ function Home() {
                     <div className="home-container" id="app">
 
                         <div className="top-bar">
+                        {user ? (
+                            <div className="auth-menu">
+                                <span className="auth-hello">Xin chào, {user.name}</span>
+                                <button className="settings-btn" onClick={logout}>
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="auth-menu">
+                                <Link to="/login" className="settings-btn">Đăng nhập</Link>
+                                <Link to="/register" className="settings-btn">Đăng ký</Link>
+                            </div>
+                        )}
                         <button className="settings-btn" id="settingsBtn" aria-label="Cài đặt">
                             <i className="fas fa-sliders-h"></i>
                             <span>Cài đặt</span>
@@ -175,6 +191,12 @@ function Home() {
                         </div>
 
                         <header className="brand-header">
+                        <button
+                            className="btn-primary"
+                            onClick={() => navigate("/solo")}
+                        >
+                            Chơi solo với máy
+                        </button>
                         <div className="brand-icon">
                             <div className="pokeball-icon" aria-hidden="true"></div>
                         </div>
@@ -187,6 +209,10 @@ function Home() {
 
                         <div className="cards-grid">
 
+                        <button className="btn-primary" onClick={() => navigate("/solo")}>
+                            Chơi solo với máy
+                        </button>
+                        
                         <div className="action-card create-card" id="createCard">
                             <div className="card-header">
                             <div className="card-icon"><i className="fas fa-plus-circle"></i></div>

@@ -9,20 +9,12 @@ import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { gsap, ScrollTrigger, prefersReducedMotion } from "../lib/gsap";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const MAX_POKEMON_ID = 1025;
 
-// Pokémon type names + icons (English)
-const TYPE_LABELS = {
-    normal: ["Normal", "⚪"], fire: ["Fire", "🔥"], water: ["Water", "💧"],
-    grass: ["Grass", "🍃"], electric: ["Electric", "⚡"], ice: ["Ice", "❄️"],
-    fighting: ["Fighting", "🥊"], poison: ["Poison", "☠️"], ground: ["Ground", "⛰️"],
-    flying: ["Flying", "🕊️"], psychic: ["Psychic", "🔮"], bug: ["Bug", "🐛"],
-    rock: ["Rock", "🪨"], ghost: ["Ghost", "👻"], dragon: ["Dragon", "🐉"],
-    dark: ["Dark", "🌙"], steel: ["Steel", "⚙️"], fairy: ["Fairy", "🧚"],
-};
-
+// Pokémon type badge colors
 const TYPE_COLOR = {
     normal: "#A8A878", fire: "#F08030", water: "#6890F0", grass: "#78C850",
     electric: "#F8D030", ice: "#98D8D8", fighting: "#C03028", poison: "#A040A0",
@@ -100,6 +92,10 @@ function Home() {
     const settingsRef = useRef(null);
     const barRef = useRef(null);
 
+    // Account dropdown menu
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+
     // New sections
     const [mystery, setMystery] = useState(null);
     const [mysteryLoading, setMysteryLoading] = useState(true);
@@ -116,15 +112,25 @@ function Home() {
     ]);
     const countdown = useCountdown();
 
-    // ---- Close settings on click outside ----
+    // ---- Close settings / account menu on click outside or Escape ----
     useEffect(() => {
         function handleClickOutside(e) {
             if (settingsRef.current && !settingsRef.current.contains(e.target)) {
                 setSettingsOpen(false);
             }
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        }
+        function handleEscape(e) {
+            if (e.key === "Escape") { setMenuOpen(false); setSettingsOpen(false); }
         }
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
     }, []);
 
     // ---- GSAP: fullscreen hero collapses to the sides + header docks on scroll ----
@@ -133,13 +139,13 @@ function Home() {
         const container = document.querySelector(".home-container");
         if (!bar) return;
 
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-        // Fallback when GSAP is missing or reduced motion: toggle CSS class
-        if (!window.gsap || !window.ScrollTrigger || reduceMotion) {
+        // Fallback for reduced motion: toggle CSS class on scroll
+        if (prefersReducedMotion()) {
             const onScroll = () => {
                 const y = container ? container.scrollTop : window.scrollY;
-                bar.classList.toggle("scrolled", y > 60);
+                const scrolled = y > 60;
+                bar.classList.toggle("scrolled", scrolled);
+                bar.classList.toggle("condensed", scrolled);
             };
             container?.addEventListener("scroll", onScroll, { passive: true });
             window.addEventListener("scroll", onScroll, { passive: true });
@@ -150,8 +156,6 @@ function Home() {
             };
         }
 
-        const gsap = window.gsap;
-        gsap.registerPlugin(window.ScrollTrigger);
         bar.classList.add("gsap-on");
 
         const ctx = gsap.context(() => {
@@ -163,6 +167,14 @@ function Home() {
                     start: "top top+=60",
                     end: "bottom top",
                     scrub: 0.6,
+                    onUpdate: (self) => {
+                        // Past ~12% of the scroll: collapse the full auth
+                        // buttons into the single dropdown trigger
+                        bar.classList.toggle(
+                            "condensed",
+                            self.progress > 0.12
+                        );
+                    },
                 },
             });
             // Hero daily: each element collapses outward to the sides
@@ -172,16 +184,23 @@ function Home() {
                 .to(".brand-header .daily-sub", { x: -130, opacity: 0 }, 0)
                 .to(".brand-header .hero-countdown", { x: 130, opacity: 0 }, 0)
                 .to(".brand-header .btn-daily", { x: -170, opacity: 0 }, 0)
-                // Header: solid -> transparent on scroll down
+                // Header: pill (70%, translucent bg) -> full width, bg fades out.
+                // Logo & auth stay pinned to the bar edges via space-between,
+                // so they glide outward naturally as the bar widens —
+                // no x translation (it would push them off the bar).
+                // ease "none": width giãn đều theo scroll, không vọt nhanh lúc đầu
                 .to(".top-bar", {
+                    width: "100%",
+                    maxWidth: "100%",
+                    borderRadius: "0px 0px 0px 0px",
                     backgroundColor: "rgba(255,253,248,0)",
                     borderBottomColor: "rgba(43,58,85,0)",
                     boxShadow: "0 0px 0 rgba(43,58,85,0)",
-                    ease: "power1.out",
+                    ease: "none",
                 }, 0.05);
         });
 
-        const t = setTimeout(() => window.ScrollTrigger?.refresh(), 1200);
+        const t = setTimeout(() => ScrollTrigger.refresh(), 1200);
         return () => { clearTimeout(t); ctx.revert(); };
     }, []);
 
@@ -266,6 +285,7 @@ function Home() {
                     playerId,
                     name,
                     mode: isPrivate ? "private" : "pvp",
+                    authToken: localStorage.getItem("pokemon_auth_token"),
                 },
                 (response) => {
                     setCreateLoading(false);
@@ -327,8 +347,10 @@ function Home() {
             socket.emit(
                 "join_room",
                 {
+                    roomId: code,
                     playerId,
                     name,
+                    authToken: localStorage.getItem("pokemon_auth_token"),
                 },
                 (response) => {
                     setJoinLoading(false);
@@ -361,10 +383,10 @@ function Home() {
     };
 
     const adventures = [
-        { num: 1, icon: "📅", title: "Daily Challenge", desc: "A random Pokémon to guess every game", cls: "adv-1", action: () => navigate("/solo") },
-        { num: 2, icon: "⚔️", title: "Quick PVP Battle", desc: "Face off against other players", cls: "adv-2", action: () => navigate("/pvp") },
-        { num: 3, icon: "➕", title: "Create Room", desc: "Invite friends to play", cls: "adv-3", action: () => scrollToId("createCard") },
-        { num: 4, icon: "🚪", title: "Join Room", desc: "Enter a room code to join", cls: "adv-4", action: () => scrollToId("joinCard") },
+        { num: 1, icon: "/daily.png", title: "Daily Challenge", desc: "A random Pokémon to guess every game", cls: "adv-1", action: () => navigate("/solo") },
+        { num: 2, icon: "/pvp.png", title: "Quick PVP Battle", desc: "Face off against other players", cls: "adv-2", action: () => navigate("/pvp") },
+        { num: 3, icon: "/create.png", title: "Create Room", desc: "Invite friends to play", cls: "adv-3", action: () => scrollToId("createCard") },
+        { num: 4, icon: "/join.png", title: "Join Room", desc: "Enter a room code to join", cls: "adv-4", action: () => scrollToId("joinCard") },
     ];
 
     const journeySteps = [
@@ -395,23 +417,86 @@ function Home() {
                         <span className="top-name">GUESS MY<br />POKÉMON</span>
                     </Link>
                     <div className="top-auth">
-                        {user ? (
-                            <div className="auth-menu">
-                                <span className="auth-hello">Hello, {user.name}</span>
-                                <button className="settings-btn" onClick={logout}>
-                                    Log out
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="auth-menu">
-                                <Link to="/login" className="settings-btn">Log in</Link>
-                                <Link to="/register" className="settings-btn">Sign up</Link>
-                            </div>
-                        )}
-                        <button className="settings-btn" id="settingsBtn" aria-label="Settings">
-                            <i className="fas fa-sliders-h"></i>
-                            <span>Settings</span>
-                        </button>
+                        {/* Full buttons when the bar is NOT scrolled */}
+                        <div className="auth-full">
+                            {user ? (
+                                <>
+                                    <span className="auth-user">
+                                        <span className="user-avatar" aria-hidden="true">
+                                            {(user.name || "T").charAt(0).toUpperCase()}
+                                        </span>
+                                        <span className="auth-username">{user.name}</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="auth-btn"
+                                        onClick={logout}
+                                    >
+                                        Log out
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/login" className="auth-btn">
+                                        Log in
+                                    </Link>
+                                    <Link to="/register" className="auth-btn primary">
+                                        Sign up
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Single circular trigger when scrolled */}
+                        <div className="user-dropdown" ref={menuRef}>
+                            <button
+                                className="dropdown-trigger"
+                                onClick={() => setMenuOpen((v) => !v)}
+                                aria-haspopup="menu"
+                                aria-expanded={menuOpen}
+                                aria-label="Account menu"
+                            >
+                                {user ? (
+                                    <span className="user-avatar" aria-hidden="true">
+                                        {(user.name || "T").charAt(0).toUpperCase()}
+                                    </span>
+                                ) : (
+                                    <i className="fas fa-bars" aria-hidden="true"></i>
+                                )}
+                            </button>
+                            {menuOpen && (
+                                <div className="dropdown-menu" role="menu">
+                                    {user ? (
+                                        <>
+                                            <div className="dropdown-greet">Hello, {user.name}</div>
+                                            <button type="button" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                                                <i className="fas fa-sliders-h" aria-hidden="true"></i>
+                                                <span>Settings</span>
+                                            </button>
+                                            <button type="button" className="dropdown-item" onClick={() => { setMenuOpen(false); logout(); }}>
+                                                <i className="fas fa-sign-out-alt" aria-hidden="true"></i>
+                                                <span>Log out</span>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link to="/login" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                                                <i className="fas fa-sign-in-alt" aria-hidden="true"></i>
+                                                <span>Log in</span>
+                                            </Link>
+                                            <Link to="/register" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                                                <i className="fas fa-user-plus" aria-hidden="true"></i>
+                                                <span>Sign up</span>
+                                            </Link>
+                                            <button type="button" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                                                <i className="fas fa-sliders-h" aria-hidden="true"></i>
+                                                <span>Settings</span>
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -470,10 +555,12 @@ function Home() {
                         <div className="adventure-grid">
                             {adventures.map((a) => (
                                 <button key={a.num} className={`adventure-card ${a.cls}`} onClick={a.action}>
-                                    <span className="adv-num">{a.num}.</span>
-                                    <span className="adv-icon">{a.icon}</span>
-                                    <span className="adv-title">{a.title}</span>
-                                    <span className="adv-desc">{a.desc}</span>
+                                    <span className="adv-text">
+                                        <span className="adv-num">{a.num}.</span>
+                                        <span className="adv-title">{a.title}</span>
+                                        <span className="adv-desc">{a.desc}</span>
+                                    </span>
+                                    <span className="adv-icon"><img src={a.icon} alt={a.title} /></span>
                                 </button>
                             ))}
                         </div>
@@ -541,7 +628,7 @@ function Home() {
                                                 className="dex-type"
                                                 style={{ background: TYPE_COLOR[t] || "#A8A878" }}
                                             >
-                                                {(TYPE_LABELS[t] || [t])[1]} {(TYPE_LABELS[t] || [t])[0]}
+                                                {t.charAt(0).toUpperCase() + t.slice(1)}
                                             </span>
                                         ))}
                                     </span>

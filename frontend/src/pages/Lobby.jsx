@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import PokemonSelector from "../components/PokemonSelector";
 import { useNavigate, useParams } from "react-router-dom";
 import '../css/Lobby.css'
+import { useEntrance } from "../hooks/useEntrance";
 function Lobby() {
     const { roomId: urlRoomId } = useParams();
     const navigate = useNavigate();
@@ -17,6 +18,11 @@ function Lobby() {
         urlRoomId ||
         localStorage.getItem("pokemon_room_id");
 
+    // Entrance animation (re-runs when switching screens)
+    const entranceRef = useRef(null);
+    const screen = !room ? "loading" : room.status === "choosing" ? "choosing" : "lobby";
+    useEntrance(entranceRef, [screen]);
+
     useEffect(() => {
         if (!roomId) {
             setError("Room code not found.");
@@ -28,7 +34,8 @@ function Lobby() {
                 "reconnect_room",
                 {
                     roomId,
-                    playerId
+                    playerId,
+                    authToken: localStorage.getItem("pokemon_auth_token"),
                 },
                 (response) => {
                     if (!response?.success) {
@@ -325,9 +332,9 @@ if (!room) {
             <div className="particle"></div>
         </div>
 
-        <div className="lobby-container" id="lobbyApp">
+        <div className="lobby-container" id="lobbyApp" ref={entranceRef}>
 
-            <header className="top-bar">
+            <header className="lobby-top-bar" data-entrance>
             <div className="brand">
                 <span className="pokeball-mini"></span>
                 POKÉDEDUCTION
@@ -353,7 +360,7 @@ if (!room) {
 
             <div className="lobby-grid">
 
-            <aside className="sidebar">
+            <aside className="sidebar" data-entrance>
                 <div className="info-card">
                 <div className="card-title">Room Info</div>
                 <div className="info-row">
@@ -405,7 +412,7 @@ if (!room) {
                 </div>
             </aside>
 
-            <main className="main-panel">
+            <main className="main-panel" data-entrance>
 
                 <div className="room-header">
                 <div className="title-group">

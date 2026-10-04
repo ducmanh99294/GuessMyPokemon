@@ -1,8 +1,9 @@
 // Login.jsx
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../css/Auth.css";
+import { useEntrance } from "../hooks/useEntrance";
 
 function Login() {
     const navigate = useNavigate();
@@ -12,6 +13,10 @@ function Login() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Entrance animation
+    const entranceRef = useRef(null);
+    useEntrance(entranceRef);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -35,8 +40,8 @@ function Login() {
                 <div className="radial-glow-2"></div>
             </div>
 
-            <div className="auth-container">
-                <div className="auth-card">
+            <div className="auth-container" ref={entranceRef}>
+                <div className="auth-card" data-entrance>
                     <h1 className="auth-title">Log In</h1>
                     <p className="auth-sub">Welcome back, trainer!</p>
 

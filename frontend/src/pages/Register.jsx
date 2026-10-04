@@ -1,8 +1,9 @@
 // Register.jsx
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../css/Auth.css";
+import { useEntrance } from "../hooks/useEntrance";
 
 function Register() {
     const navigate = useNavigate();
@@ -14,6 +15,10 @@ function Register() {
     const [confirm, setConfirm] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Entrance animation
+    const entranceRef = useRef(null);
+    useEntrance(entranceRef);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -43,8 +48,8 @@ function Register() {
                 <div className="radial-glow-2"></div>
             </div>
 
-            <div className="auth-container">
-                <div className="auth-card">
+            <div className="auth-container" ref={entranceRef}>
+                <div className="auth-card" data-entrance>
                     <h1 className="auth-title">Sign Up</h1>
                     <p className="auth-sub">Create an account to save scores and climb the leaderboard.</p>
 

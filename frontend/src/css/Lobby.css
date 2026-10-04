@@ -34,7 +34,7 @@
 }
 
 /* ===== TOP BAR ===== */
-.lobby-container .top-bar {
+.lobby-top-bar {
     width: 100%;
     max-width: 1060px;
     display: flex;
@@ -50,11 +50,11 @@
     flex-wrap: wrap;
 }
 
-.lobby-container .top-bar::before {
+.lobby-top-bar::before {
     display: none;
 }
 
-.lobby-container .top-bar .brand {
+.lobby-top-bar .brand {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -65,7 +65,7 @@
     color: #22304A;
 }
 
-.lobby-container .top-bar .brand .pokeball-mini {
+.lobby-top-bar .brand .pokeball-mini {
     position: relative;
     width: 30px;
     height: 30px;
@@ -75,7 +75,7 @@
     animation: ball-spin 6s linear infinite;
 }
 
-.lobby-container .top-bar .brand .pokeball-mini::after {
+.lobby-top-bar .brand .pokeball-mini::after {
     content: "";
     position: absolute;
     top: 50%;
@@ -92,13 +92,13 @@
     to { transform: rotate(360deg); }
 }
 
-.lobby-container .top-bar .room-code-wrapper {
+.lobby-top-bar .room-code-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.lobby-container .top-bar .room-code-label {
+.lobby-top-bar .room-code-label {
     font-size: 0.75rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -106,7 +106,7 @@
     color: #8A94AD;
 }
 
-.lobby-container .top-bar .room-code-display {
+.lobby-top-bar .room-code-display {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
     font-size: 1.15rem;
@@ -118,7 +118,7 @@
     color: #22304A;
 }
 
-.lobby-container .top-bar .copy-btn {
+.lobby-top-bar .copy-btn {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
     font-size: 0.78rem;
@@ -132,17 +132,17 @@
     transition: all 0.12s ease;
 }
 
-.lobby-container .top-bar .copy-btn:hover {
+.lobby-top-bar .copy-btn:hover {
     transform: translateY(-1px);
     filter: brightness(1.05);
 }
 
-.lobby-container .top-bar .copy-btn.copied {
+.lobby-top-bar .copy-btn.copied {
     background: #7BC96F;
     color: #fff;
 }
 
-.lobby-container .top-bar .leave-btn {
+.lobby-top-bar .leave-btn {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
     font-size: 0.8rem;
@@ -155,7 +155,7 @@
     transition: all 0.12s ease;
 }
 
-.lobby-container .top-bar .leave-btn:hover {
+.lobby-top-bar .leave-btn:hover {
     background: #FFE3E1;
 }
 
@@ -855,7 +855,7 @@
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-    .lobby-container .top-bar {
+    .lobby-top-bar {
         justify-content: center;
         text-align: center;
     }

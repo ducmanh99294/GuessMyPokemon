@@ -4,16 +4,38 @@
 // Events (client -> server):
 // - "pvp_find_match"   ({ playerId, playerName }) -> join the queue.
 //   When 2 are ready: create a "pvp" room, put both sockets in,
-//   emit "pvp_matched" { roomId, opponent } to each player.
+//   auto-start it (status "choosing"), then emit "pvp_matched"
+//   { roomId, opponent } to each player.
 // - "pvp_cancel_match" ({ playerId })             -> leave the queue.
 //
-// After "pvp_matched", the client navigates to /game/:roomId.
-// The pick/guess/scoring flow fully reuses
-// gameManager + GameRoom like a normal room (reconnect_room
-// reattaches the socket since the player is already in room.players).
+// After "pvp_matched", the client navigates to /lobby/:roomId.
+// Because the room is already "choosing", the lobby renders
+// PokemonSelector immediately — no extra Start click needed.
+// When both picked, "game_started" fires -> /game/:roomId.
 // =====================================================
 
 const roomManager = require("../managers/roomManager");
+const gameManager = require("../managers/gameManager");
+const userManager = require("../managers/userManager");
+const { verifyToken } = require("../middleware/authMiddleware");
+
+// Resolve { isGuest } from a login JWT.
+// Missing/invalid/expired token -> guest (score always 0).
+async function resolveAuth(authToken) {
+    if (!authToken) {
+        return { isGuest: true };
+    }
+    try {
+        const decoded = verifyToken(authToken);
+        const user = await userManager.findById(decoded.sub);
+        if (user) {
+            return { isGuest: false };
+        }
+    } catch {
+        // invalid token -> guest
+    }
+    return { isGuest: true };
+}
 
 // Matchmaking queue: Map<playerId, { playerId, name, socket, joinedAt }>
 const queue = new Map();
@@ -26,7 +48,7 @@ function setupPvpSocket(io) {
 
         socket.on(
             "pvp_find_match",
-            ({ playerId, playerName }, callback) => {
+            async ({ playerId, playerName, authToken }, callback) => {
                 try {
                     if (!playerId) {
                         throw new Error("Player ID is required");
@@ -34,16 +56,21 @@ function setupPvpSocket(io) {
 
                     socket.playerId = playerId;
 
+                    // Keep it raw (may be "") — tryMatch assigns
+                    // "Player 1" / "Player 2" in match order
                     const name =
-                        String(playerName || "Player")
+                        String(playerName || "")
                             .trim()
-                            .slice(0, 20) || "Player";
+                            .slice(0, 20);
+
+                    const auth = await resolveAuth(authToken);
 
                     // Already in queue -> update to the new socket
                     // (avoid duplicates when the user re-searches / reconnects)
                     if (queue.has(playerId)) {
                         queue.get(playerId).socket = socket;
                         queue.get(playerId).name = name;
+                        queue.get(playerId).isGuest = auth.isGuest;
 
                         callback?.({
                             success: true,
@@ -58,6 +85,7 @@ function setupPvpSocket(io) {
                     queue.set(playerId, {
                         playerId,
                         name,
+                        isGuest: auth.isGuest,
                         socket,
                         joinedAt: Date.now(),
                     });
@@ -137,12 +165,27 @@ function tryMatch(io) {
     queue.delete(p1.playerId);
     queue.delete(p2.playerId);
 
+    // Default names in match order when a player didn't enter one
+    // (avoid colliding with the other player's custom name)
+    let p1Name = p1.name;
+    let p2Name = p2.name;
+
+    if (!p1Name && !p2Name) {
+        p1Name = "Player 1";
+        p2Name = "Player 2";
+    } else if (!p1Name) {
+        p1Name = p2Name === "Player 1" ? "Player 2" : "Player 1";
+    } else if (!p2Name) {
+        p2Name = p1Name === "Player 2" ? "Player 1" : "Player 2";
+    }
+
     // Reuse roomManager: 2-player pvp room
     const room = roomManager.createRoom(
         {
             id: p1.playerId,
             socketId: p1.socket.id,
-            name: p1.name,
+            name: p1Name,
+            isGuest: p1.isGuest === true,
         },
         "pvp"
     );
@@ -150,24 +193,29 @@ function tryMatch(io) {
     roomManager.joinRoom(room.roomId, {
         id: p2.playerId,
         socketId: p2.socket.id,
-        name: p2.name,
+        name: p2Name,
+        isGuest: p2.isGuest === true,
     });
+
+    // Jump straight to Pokemon selection — no extra "Start" click.
+    // The lobby will render PokemonSelector because status === "choosing".
+    gameManager.startGame(room.roomId);
 
     p1.socket.join(room.roomId);
     p2.socket.join(room.roomId);
 
     p1.socket.emit("pvp_matched", {
         roomId: room.roomId,
-        opponent: { name: p2.name },
+        opponent: { name: p2Name },
     });
 
     p2.socket.emit("pvp_matched", {
         roomId: room.roomId,
-        opponent: { name: p1.name },
+        opponent: { name: p1Name },
     });
 
     console.log(
-        `[pvp] Matched ${p1.name} vs ${p2.name} -> room ${room.roomId}`
+        `[pvp] Matched ${p1Name} vs ${p2Name} -> room ${room.roomId}`
     );
 }
 

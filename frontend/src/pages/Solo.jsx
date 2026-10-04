@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { useAuth } from "../context/AuthContext";
+import { useEntrance } from "../hooks/useEntrance";
 import SoloLeaderboard from "../components/SoloLeaderboard";
 import GuestWarningModal from "../components/GuestWarningModal";
 import "../css/Solo.css";
@@ -38,6 +39,11 @@ function Solo() {
     // Not logged in -> guest play with an anonymous playerId.
     const playerId = user ? `user_${user.id}` : getPlayerId();
     const finished = game && game.status !== "playing";
+
+    // Entrance animation, re-run when switching screens
+    const entranceRef = useRef(null);
+    const screen = game ? (finished ? "result" : "game") : (alreadyPlayed ? "done" : "start");
+    useEntrance(entranceRef, [screen]);
 
     // Identity changed (guest <-> logged in): clear stale state so the
     // new identity gets a fresh check.
@@ -289,8 +295,8 @@ function Solo() {
                     <div className="radial-glow-2"></div>
                 </div>
 
-                <div className="solo-container">
-                    <header className="solo-header">
+                <div className="solo-container" ref={entranceRef}>
+                    <header className="solo-header" data-entrance>
                         <h1 className="solo-title">DAILY CHALLENGE</h1>
                         <p className="solo-sub">
                             🎯 You&apos;ve already completed
@@ -298,7 +304,7 @@ function Solo() {
                         </p>
                     </header>
 
-                    <div className="solo-card solo-result">
+                    <div className="solo-card solo-result" data-entrance>
                         <h1 className="result-win">See you tomorrow! 🌙</h1>
                         <p className="card-hint">
                             A new challenge unlocks at midnight.
@@ -345,8 +351,8 @@ function Solo() {
                     <div className="particle"></div>
                 </div>
 
-                <div className="solo-container">
-                    <header className="solo-header">
+                <div className="solo-container" ref={entranceRef}>
+                    <header className="solo-header" data-entrance>
                         <h1 className="solo-title">DAILY CHALLENGE</h1>
                         <p className="solo-sub">
                             Every game hides a{" "}
@@ -433,8 +439,8 @@ function Solo() {
                     <div className="radial-glow-2"></div>
                 </div>
 
-                <div className="solo-container">
-                    <div className="solo-card solo-result">
+                <div className="solo-container" ref={entranceRef}>
+                    <div className="solo-card solo-result" data-entrance>
                         <h1 className={won ? "result-win" : "result-lose"}>
                             {won
                                 ? "🎉 You guessed it!"
@@ -526,8 +532,8 @@ function Solo() {
                 <div className="particle"></div>
             </div>
 
-            <div className="solo-container">
-                <header className="solo-header">
+            <div className="solo-container" ref={entranceRef}>
+                <header className="solo-header" data-entrance>
                     <h1 className="solo-title">DAILY CHALLENGE</h1>
                     <p className="solo-sub">
                         {new Date().toLocaleDateString("en-US", {
@@ -558,7 +564,7 @@ function Solo() {
                     </p>
                 )}
 
-                <div className="solo-grid">
+                <div className="solo-grid" data-entrance>
                     {/* Question column */}
                     <section className="solo-card">
                         <h2>Ask a Question</h2>

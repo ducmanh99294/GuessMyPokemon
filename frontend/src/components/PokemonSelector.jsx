@@ -7,7 +7,7 @@ import "../css/PokemonSelector.css";
 const DEFAULT_FILTERS = {
     name: "",
     type: [],
-    generation: null,
+    generation: [],
     legendary: null,
     mythical: null,
     mega: null,
@@ -171,16 +171,27 @@ function PokemonSelector({ room, onGameStarted }) {
 
             /*
              * ============================
-             * GENERATION
+             * GENERATION (multi-select)
              * ============================
              */
-            if (
-                filters.generation !== null &&
-                filters.generation !== undefined
-            ) {
+            const selectedGens = Array.isArray(
+                filters.generation
+            )
+                ? filters.generation
+                : filters.generation === null ||
+                  filters.generation === undefined
+                  ? []
+                  : [filters.generation];
+
+            if (selectedGens.length > 0) {
+                const wanted = selectedGens.map((g) =>
+                    String(g)
+                );
+
                 if (
-                    String(item.generation) !==
-                    String(filters.generation)
+                    !wanted.includes(
+                        String(item.generation)
+                    )
                 ) {
                     return false;
                 }

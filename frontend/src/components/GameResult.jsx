@@ -32,7 +32,20 @@ function GameResult({
             <header className="result-header">
                 <div className="trophy-icon">🏆</div>
                 <h1>Game Finished!</h1>
-                <p>All secret Pokémon have been revealed.</p>
+                <p>
+                    {result?.reason === "opponent_left"
+                        ? "Your opponent left the game — you win!"
+                        : "All secret Pokémon have been revealed."}
+                </p>
+                {result?.reason === "opponent_left" && (
+                    <p className="abandon-note">
+                        Victory bonus (50%):{" "}
+                        <strong>+{result.abandonBonus} pts</strong>
+                        {"  •  "}
+                        Opponent penalty:{" "}
+                        <strong>{result.abandonPenalty} pts</strong>
+                    </p>
+                )}
             </header>
 
             <section className="scoreboard">

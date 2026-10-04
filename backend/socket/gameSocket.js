@@ -1,10 +1,58 @@
 const roomManager = require("../managers/roomManager");
 const gameManager = require("../managers/gameManager");
 const leaderboard = require("../managers/leaderboard");
+const userManager = require("../managers/userManager");
+const { verifyToken } = require("../middleware/authMiddleware");
+
+// Resolve { isGuest } from a login JWT.
+// Missing/invalid/expired token -> guest (score always 0).
+async function resolveAuth(authToken) {
+    if (!authToken) {
+        return { isGuest: true };
+    }
+    try {
+        const decoded = verifyToken(authToken);
+        const user = await userManager.findById(decoded.sub);
+        if (user) {
+            return { isGuest: false };
+        }
+    } catch {
+        // invalid token -> guest
+    }
+    return { isGuest: true };
+}
+
+// Grace period: a disconnected player is treated as gone only if
+// they don't reconnect within this time
+const DISCONNECT_TIMEOUT_MS = 60 * 1000;
+
+// Abandon scoring:
+// - the remaining player still scores, but only 50% of a normal win
+// - the leaver gets a -50 pts entry on the pvp leaderboard
+const ABANDON_WIN_RATIO = 0.5;
+const ABANDON_PENALTY = -50;
+
+// "roomId:playerId" -> timeout handle
+const disconnectTimers = new Map();
+
+function timerKey(roomId, playerId) {
+    return `${roomId}:${playerId}`;
+}
+
+function clearDisconnectTimer(roomId, playerId) {
+    const key = timerKey(roomId, playerId);
+    const handle = disconnectTimers.get(key);
+
+    if (handle) {
+        clearTimeout(handle);
+        disconnectTimers.delete(key);
+    }
+}
 
 // Write 1 PVP entry per player when a pvp game ends.
-// Entry: mode="pvp", score = total game score, won = 1st place.
-async function recordPvpLeaderboard(room, scoreboard) {
+// Entry: mode="pvp", score = total game score, won = 1st place
+// (forceWinnerId marks the winner when the game ends by abandonment).
+async function recordPvpLeaderboard(room, scoreboard, forceWinnerId = null) {
     const players = scoreboard?.players || [];
 
     if (players.length === 0) {
@@ -24,8 +72,13 @@ async function recordPvpLeaderboard(room, scoreboard) {
                 mode: "pvp",
                 playerId: player.id,
                 playerName: player.name,
-                score: player.score,
-                won: player.id === winnerId && player.score > 0,
+                // Guests always show 0
+                score: player.isGuest ? 0 : player.score,
+                won: player.isGuest
+                    ? false
+                    : forceWinnerId
+                      ? player.id === forceWinnerId
+                      : player.id === winnerId && player.score > 0,
                 guesses: player.guesses,
                 cluesUsed: player.cluesUsed,
                 opponentName: opponents.join(", ") || null,
@@ -39,6 +92,138 @@ async function recordPvpLeaderboard(room, scoreboard) {
 
 function setupGameSocket(io) {
 
+    // =========================================
+    // A player is gone for good (explicit leave, or
+    // disconnect timeout without reconnecting).
+    // - Game in progress:
+    //     1 player left  -> they win ("game_finished")
+    //     2+ players left -> game continues ("room_updated")
+    // - Game not started yet:
+    //     0-1 players left -> room closes ("room_closed", clients go home)
+    //     2+ players left  -> lobby continues ("room_updated")
+    // =========================================
+    function resolvePlayerGone(roomId, playerId) {
+        const room = roomManager.getRoom(roomId);
+
+        if (!room) {
+            return;
+        }
+
+        // Game already over — nothing to resolve
+        if (room.status === "finished") {
+            return;
+        }
+
+        const leaver =
+            roomManager.getPlayer(roomId, playerId);
+
+        const updatedRoom =
+            roomManager.leaveRoom(roomId, playerId);
+
+        // No players left -> room deleted
+        if (!updatedRoom) {
+            io.to(roomId).emit("room_closed");
+            return;
+        }
+
+        const remaining = updatedRoom.players;
+
+        if (updatedRoom.status === "playing") {
+            if (remaining.length === 1) {
+                // Last player standing wins — with a reduced bonus
+                updatedRoom.status = "finished";
+
+                const winner = remaining[0];
+
+                // 50% of what a correct guess would pay right now
+                // (guests always score 0 — no bonus)
+                const elapsedSeconds = Math.floor(
+                    (Date.now() - (winner.game.startTime || Date.now())) / 1000
+                );
+
+                const winBonus = winner.isGuest
+                    ? 0
+                    : Math.floor(
+                        gameManager.calculateScore(
+                            winner.game.cluesUsed || 0,
+                            elapsedSeconds
+                        ) * ABANDON_WIN_RATIO
+                    );
+
+                winner.score += winBonus;
+
+                const scoreboard =
+                    gameManager.getFinalResults(updatedRoom);
+
+                scoreboard.reason = "opponent_left";
+                scoreboard.abandonBonus = winBonus;
+                scoreboard.abandonPenalty = ABANDON_PENALTY;
+
+                io.to(roomId).emit(
+                    "game_finished",
+                    scoreboard
+                );
+
+                if (updatedRoom.mode === "pvp") {
+                    recordPvpLeaderboard(
+                        updatedRoom,
+                        scoreboard,
+                        winner.id
+                    ).catch((error) => {
+                        console.error(
+                            "[pvp] leaderboard write failed:",
+                            error.message
+                        );
+                    });
+
+                    // Penalty entry for the leaver
+                    // (guests always show 0 — no negative score)
+                    if (leaver) {
+                        leaderboard.addEntry({
+                            mode: "pvp",
+                            playerId: leaver.id,
+                            playerName: leaver.name,
+                            score: leaver.isGuest ? 0 : ABANDON_PENALTY,
+                            won: false,
+                            guesses: leaver.game.guesses || 0,
+                            cluesUsed: leaver.game.cluesUsed || 0,
+                            opponentName: winner.name,
+                            durationSeconds: Math.floor(
+                                (Date.now() - (updatedRoom.createdAt || Date.now())) / 1000
+                            ),
+                        }).catch((error) => {
+                            console.error(
+                                "[pvp] abandon penalty write failed:",
+                                error.message
+                            );
+                        });
+                    }
+                }
+
+                return;
+            }
+
+            io.to(roomId).emit(
+                "room_updated",
+                gameManager.getPublicRoomState(updatedRoom)
+            );
+
+            return;
+        }
+
+        // Game hasn't started yet
+        if (remaining.length <= 1) {
+            roomManager.deleteRoom(roomId);
+            io.to(roomId).emit("room_closed");
+            return;
+        }
+
+        io.to(roomId).emit(
+            "room_updated",
+            gameManager.getPublicRoomState(updatedRoom)
+        );
+    }
+
     io.on("connection", (socket) => {
 
         // =========================================
@@ -47,7 +232,7 @@ function setupGameSocket(io) {
 
         socket.on(
             "create_room",
-            ({ playerId, name, mode = "private" }, callback) => {
+            async ({ playerId, name, mode = "private", authToken }, callback) => {
 
                 try {
                     if (!playerId) {
@@ -56,12 +241,15 @@ function setupGameSocket(io) {
 
                     socket.playerId = playerId; // ⭐ ADDED
 
+                    const auth = await resolveAuth(authToken);
+
                     const room =
                         roomManager.createRoom(
                             {
                                 id: playerId,
                                 socketId: socket.id,
-                                name: name || "Player"
+                                name: name || "Player",
+                                isGuest: auth.isGuest
                             },
                             mode
                         );
@@ -88,7 +276,7 @@ function setupGameSocket(io) {
 
         socket.on(
             "join_room",
-            ({ roomId, playerId, name }, callback) => {
+            async ({ roomId, playerId, name, authToken }, callback) => {
 
                 try {
                     if (!playerId) {
@@ -98,7 +286,13 @@ function setupGameSocket(io) {
                     socket.playerId = playerId;
 
                     const normalizedRoomId =
-                        roomId.trim().toUpperCase();
+                        String(roomId || "").trim().toUpperCase();
+
+                    if (!normalizedRoomId) {
+                        throw new Error("Room code is required");
+                    }
+
+                    const auth = await resolveAuth(authToken);
 
                     const room =
                         roomManager.joinRoom(
@@ -106,11 +300,14 @@ function setupGameSocket(io) {
                             {
                                 id: playerId,
                                 socketId: socket.id,
-                                name: name || "Player"
+                                name: name || "Player",
+                                isGuest: auth.isGuest
                             }
                         );
 
                     socket.join(normalizedRoomId);
+
+                    clearDisconnectTimer(normalizedRoomId, playerId);
 
                     socket.emit(
                         "chat_history",
@@ -273,9 +470,9 @@ socket.on(
 
         socket.on("leave_room", ({ roomId, playerId }, callback) => {
             try {
-                const room = roomManager.getRoom(roomId);
+                const updatedRoom = roomManager.getRoom(roomId);
 
-                if (!room) {
+                if (!updatedRoom) {
                     return callback?.({
                         success: false,
                         message: "Room not found"
@@ -291,19 +488,12 @@ socket.on(
                     });
                 }
 
-                const updatedRoom = roomManager.leaveRoom(
-                    roomId,
-                    playerId
-                );
-
                 socket.leave(roomId);
+                clearDisconnectTimer(roomId, playerId);
 
-                if (updatedRoom) {
-                    io.to(roomId).emit(
-                        "room_updated",
-                        gameManager.getPublicRoomState(updatedRoom)
-                    );
-                }
+                // Explicit leave resolves immediately:
+                // win for the last one standing, or room closes
+                resolvePlayerGone(roomId, playerId);
 
                 callback?.({
                     success: true
@@ -353,6 +543,49 @@ socket.on(
                         "room_updated",
                         publicRoom
                     );
+
+                    // Give them a grace period to reconnect before
+                    // treating them as gone (win for the opponent /
+                    // room closes if the game hasn't started)
+                    clearDisconnectTimer(room.roomId, player.id);
+
+                    disconnectTimers.set(
+                        timerKey(room.roomId, player.id),
+                        setTimeout(() => {
+                            disconnectTimers.delete(
+                                timerKey(room.roomId, player.id)
+                            );
+
+                            const currentRoom =
+                                roomManager.getRoom(room.roomId);
+
+                            const currentPlayer =
+                                currentRoom &&
+                                roomManager.getPlayer(
+                                    room.roomId,
+                                    player.id
+                                );
+
+                            // Reconnected in time -> nothing to do
+                            if (
+                                !currentRoom ||
+                                !currentPlayer ||
+                                currentPlayer.connected
+                            ) {
+                                return;
+                            }
+
+                            console.log(
+                                `[room] ${player.name} (${player.id}) ` +
+                                `did not reconnect in time -> resolving ${room.roomId}`
+                            );
+
+                            resolvePlayerGone(
+                                room.roomId,
+                                player.id
+                            );
+                        }, DISCONNECT_TIMEOUT_MS)
+                    );
                 }
             }
         );
@@ -363,7 +596,7 @@ socket.on(
 
         socket.on(
             "reconnect_room",
-            ({ roomId, playerId }, callback) => {
+            async ({ roomId, playerId, authToken }, callback) => {
                 try {
                     const room =
                         roomManager.getRoom(roomId);
@@ -386,12 +619,22 @@ socket.on(
                         );
                     }
 
+                    const auth = await resolveAuth(authToken);
+
                     socket.playerId = playerId;
                     player.socketId = socket.id;
                     player.connected = true;
                     player.disconnectAt = null;
+                    player.isGuest = auth.isGuest;
+
+                    clearDisconnectTimer(roomId, playerId);
 
                     socket.join(roomId);
+
+                    socket.emit(
+                        "chat_history",
+                        roomManager.getChat(roomId)
+                    );
 
                     const publicRoom =
                         gameManager.getPublicRoomState(

@@ -84,6 +84,7 @@ class RoomManager {
             id: player.id,
             socketId: player.socketId || null,
             name: player.name,
+            isGuest: player.isGuest === true,
 
             connected: true,
             disconnectAt: null,

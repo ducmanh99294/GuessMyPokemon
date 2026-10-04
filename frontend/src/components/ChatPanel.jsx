@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
+import "../css/ChatPanel.css"
+
 function formatTime(timestamp) {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -98,11 +100,13 @@ function ChatPanel({ roomId }) {
                             )}
 
                             <div className="bubble">
-                                {!isMine && (
-                                    <span className="sender">{item.playerName}</span>
-                                )}
-                                <span className="text">{item.message}</span>
-                                <span className="time">{formatTime(item.timestamp)}</span>
+                                <div className="bubble-header">
+                                    {!isMine && (
+                                        <span className="sender">{item.playerName}</span>
+                                    )}
+                                    <span className="time">{formatTime(item.timestamp)}</span>
+                                </div>
+                                <div className="text">{item.message}</div>
                             </div>
                         </div>
                     );

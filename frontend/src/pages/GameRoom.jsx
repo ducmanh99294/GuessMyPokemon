@@ -1,5 +1,5 @@
 import ChatPanel from "../components/ChatPanel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FilterPanel from "../components/FilterPanel";
 import PokemonList from "../components/PokemonList";
 import GameResult from "../components/GameResult";
@@ -7,10 +7,11 @@ import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { useNavigate, useParams } from "react-router-dom";
 import "../css/GameRoom.css";
+import { useEntrance } from "../hooks/useEntrance";
     const DEFAULT_FILTERS = {
         type: [],
         name: "",
-        generation: null,
+        generation: [],
         legendary: null,
         mythical: null,
         mega: null,
@@ -37,6 +38,11 @@ function GameRoom() {
     const [guessing, setGuessing] = useState(false);
     const [guessResult, setGuessResult] = useState(null);
     const [gameFinished, setGameFinished] = useState(null);
+
+    // Entrance animation (re-runs when switching screens)
+    const entranceRef = useRef(null);
+    const screen = !gameState ? "loading" : gameFinished ? "result" : "main";
+    useEntrance(entranceRef, [screen]);
 
     const myPlayerId = getPlayerId();
     const opponents = (gameState?.players || []).filter(
@@ -216,6 +222,26 @@ function doGuess(pokemon, targetPlayerId) {
             );
         };
     }, []);
+
+    useEffect(() => {
+        function handleRoomClosed() {
+            localStorage.removeItem("pokemon_room_id");
+            localStorage.removeItem("pokemon_guess_room");
+            navigate("/");
+        }
+
+        socket.on(
+            "room_closed",
+            handleRoomClosed
+        );
+
+        return () => {
+            socket.off(
+                "room_closed",
+                handleRoomClosed
+            );
+        };
+    }, [navigate]);
 
     useEffect(() => {
         function handleConnect() {
@@ -530,12 +556,13 @@ return (
         <div
             className="game-container"
             id="gameApp"
+            ref={entranceRef}
         >
 
             {/* =====================================================
                 HEADER
             ====================================================== */}
-            <header className="top-bar">
+            <header className="room-top-bar" data-entrance>
 
                 <div className="brand">
                     <span className="pokeball-mini"></span>
@@ -586,7 +613,7 @@ return (
                 MAIN GAME
                 PLAYERS | POKEDEX | CHAT
             ====================================================== */}
-<div className="game-grid">
+<div className="game-grid" data-entrance>
 
     {/* =================================================
         LEFT - PLAYERS

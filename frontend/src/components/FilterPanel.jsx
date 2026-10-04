@@ -22,10 +22,27 @@ const TYPES = [
     "fairy"
 ];
 
+// Màu từng hệ (đồng bộ với CSS .active)
+const TYPE_COLOR = {
+    normal: "#A8A77A", fire: "#EE8130", water: "#6390F0",
+    electric: "#E8B800", grass: "#6FAE4E", ice: "#7FC8C8",
+    fighting: "#C22E28", poison: "#A33EA1", ground: "#D1A94F",
+    flying: "#8E7CF0", psychic: "#F95587", bug: "#93A51A",
+    rock: "#A1913B", ghost: "#735797", dragon: "#6F35FC",
+    dark: "#5A4A3A", steel: "#9AA0B5", fairy: "#D685AD",
+};
+
+// Luôn trả về mảng (tương thích dữ liệu cũ đang lưu số đơn)
+function asArray(value) {
+    if (Array.isArray(value)) return value;
+    if (value === null || value === undefined || value === "") return [];
+    return [value];
+}
+
 const DEFAULT_FILTERS = {
     type: [],
     name: "",
-    generation: null,
+    generation: [],
     legendary: null,
     mythical: null,
     mega: null,
@@ -219,6 +236,10 @@ function FilterPanel({
 
                                 }}
                             >
+                                <span
+                                    className="type-dot"
+                                    style={{ background: TYPE_COLOR[type] }}
+                                />
                                 {type}
                             </button>
                         );
@@ -240,10 +261,11 @@ function FilterPanel({
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
                         (generation) => {
 
+                            const selectedGens =
+                                asArray(filters.generation).map(Number);
+
                             const selected =
-                                Number(
-                                    filters.generation
-                                ) === generation;
+                                selectedGens.includes(generation);
 
                             return (
                                 <button
@@ -256,14 +278,26 @@ function FilterPanel({
                                     }
                                     onClick={() => {
 
-                                        if (selected) {
+                                        const updated =
+                                            selected
+                                                ? selectedGens.filter(
+                                                    (g) => g !== generation
+                                                )
+                                                : [
+                                                    ...selectedGens,
+                                                    generation
+                                                ];
+
+                                        if (
+                                            updated.length === 0
+                                        ) {
                                             handleRemoveFilter(
                                                 "generation"
                                             );
                                         } else {
                                             handleUpdateFilter(
                                                 "generation",
-                                                generation
+                                                updated
                                             );
                                         }
 
@@ -375,7 +409,10 @@ function FilterPanel({
 
             <section>
                 <h3>Evolution</h3>
-                <div className="evolution-options">
+
+                <div className="evo-group">
+                    <span className="evo-label">Can evolve</span>
+                    <div className="evo-segment">
 
                     <button
                         type="button"
@@ -437,10 +474,12 @@ function FilterPanel({
                         No Evolution
                     </button>
 
+                    </div>
                 </div>
 
-
-                <div className="evolution-forms">
+                <div className="evo-group">
+                    <span className="evo-label">Number of forms</span>
+                    <div className="evolution-forms">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
                         (forms) => {
 
@@ -473,13 +512,14 @@ function FilterPanel({
 
                                     }}
                                 >
-                                    {forms} forms
+                                    {forms}
                                 </button>
                             );
 
                         }
                     )}
 
+                    </div>
                 </div>
 
             </section>
@@ -603,21 +643,39 @@ function FilterPanel({
                     ))}
 
 
-                    {/* GENERATION */}
+                    {/* GENERATION (multi-select) */}
 
-                    {filters.generation !== null &&
-                        filters.generation !== undefined && (
+                    {asArray(filters.generation).map((gen) => (
 
-                            <FilterChip
-                                label={`Gen ${filters.generation}`}
-                                onRemove={() =>
+                        <FilterChip
+                            key={`gen-${gen}`}
+                            label={`Gen ${gen}`}
+                            onRemove={() => {
+
+                                const updated =
+                                    asArray(filters.generation)
+                                        .map(Number)
+                                        .filter(
+                                            (g) => g !== Number(gen)
+                                        );
+
+                                if (
+                                    updated.length === 0
+                                ) {
                                     handleRemoveFilter(
                                         "generation"
-                                    )
+                                    );
+                                } else {
+                                    handleUpdateFilter(
+                                        "generation",
+                                        updated
+                                    );
                                 }
-                            />
 
-                        )}
+                            }}
+                        />
+
+                    ))}
 
 
                     {/* LEGENDARY */}

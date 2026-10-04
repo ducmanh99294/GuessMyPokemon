@@ -1,6 +1,7 @@
 // PVP.jsx - Quick match: random pairing with another player.
 // Flow: click "Find Opponent" -> server pairs up -> receive "pvp_matched"
-// -> navigate to /game/:roomId (reuses GameRoom + all existing components).
+// -> navigate to /lobby/:roomId (pick a secret Pokemon, like a normal room)
+// -> when both picked, game starts -> /game/:roomId.
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
@@ -9,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import "../css/PVP.css";
 import GuestWarningModal from "../components/GuestWarningModal";
 import SoloLeaderboard from "../components/SoloLeaderboard";
+import { useEntrance } from "../hooks/useEntrance";
 
 function formatElapsed(sec) {
     const m = Math.floor(sec / 60);
@@ -34,6 +36,10 @@ function PVP() {
     const timerRef = useRef(null);
     const searchingRef = useRef(false);
 
+    // Entrance animation
+    const entranceRef = useRef(null);
+    useEntrance(entranceRef);
+
     // Receive the room after the server pairs up
     useEffect(() => {
         function onMatched({ roomId, opponent }) {
@@ -43,8 +49,9 @@ function PVP() {
 
             localStorage.setItem("pokemon_room_id", roomId);
 
-            // Wait a beat so the user sees "Opponent found"
-            setTimeout(() => navigate(`/game/${roomId}`), 900);
+            // Wait a beat so the user sees "Opponent found",
+            // then go to the lobby to pick a secret Pokemon
+            setTimeout(() => navigate(`/lobby/${roomId}`), 900);
         }
 
         socket.on("pvp_matched", onMatched);
@@ -103,15 +110,21 @@ function PVP() {
     function doFind() {
         setError("");
 
-        const playerName = (user?.name || name).trim() || "Player";
-        if (!user) {
+        // Empty when the guest didn't type a name — the server
+        // assigns "Player 1" / "Player 2" in match order
+        const playerName = (user?.name || name).trim();
+        if (!user && playerName) {
             localStorage.setItem("pokemon_pvp_name", playerName);
         }
 
         ensureConnected(() => {
             socket.emit(
                 "pvp_find_match",
-                { playerId, playerName },
+                {
+                    playerId,
+                    playerName,
+                    authToken: localStorage.getItem("pokemon_auth_token"),
+                },
                 (res) => {
                     if (!res?.success) {
                         setError(
@@ -134,8 +147,8 @@ function PVP() {
     }
 
     return (
-        <div className="pvp-container">
-            <div className="pvp-card">
+        <div className="pvp-container" ref={entranceRef}>
+            <div className="pvp-card" data-entrance>
                 <div className="pvp-icon">⚔️</div>
                 <h1 className="pvp-title">Quick PVP Battle</h1>
                 <p className="pvp-sub">
@@ -211,7 +224,7 @@ function PVP() {
                 )}
             </div>
 
-            <div className="pvp-lb">
+            <div className="pvp-lb" data-entrance>
                 <SoloLeaderboard mode="pvp" />
             </div>
         </div>

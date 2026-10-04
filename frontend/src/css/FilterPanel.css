@@ -90,6 +90,10 @@
 }
 
 .type-grid button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -100,6 +104,14 @@
     border-radius: 999px;
     padding: 7px 6px;
     transition: all 0.12s ease;
+}
+
+.type-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1.5px solid #2B3A55;
+    flex-shrink: 0;
 }
 
 .type-grid button:hover {
@@ -340,11 +352,79 @@
     cursor: pointer;
 }
 
-.evolution-forms,
-.evolution-options {
+/* ===== EVOLUTION ===== */
+.evo-group {
+    margin-bottom: 12px;
+}
+
+.evo-group:last-child {
+    margin-bottom: 0;
+}
+
+.evo-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8A94AD;
+    margin-bottom: 6px;
+}
+
+/* 2 lựa chọn ghép liền nhau */
+.evo-segment {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    border: 2px solid #2B3A55;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FFFDF5;
+}
+
+.evo-segment button {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #2B3A55;
+    transition: background 0.12s ease;
+}
+
+.evo-segment button + button {
+    border-left: 2px solid #2B3A55;
+}
+
+.evo-segment button.active {
+    background: #7EC8E3;
+}
+
+.evolution-forms {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.evolution-forms button {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: #FFFDF5;
+    color: #2B3A55;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 6px 4px;
+    transition: all 0.12s ease;
+}
+
+.evolution-forms button:hover {
+    background: #FFF6DE;
+}
+
+.evolution-forms button.active {
+    background: #FFC93C;
+    box-shadow: 2px 2px 0 #2B3A55;
 }
 
 /* ===== ACTIVE FILTERS ===== */

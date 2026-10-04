@@ -5,7 +5,7 @@ const pokemonFilterService =
 const GUESS_COOLDOWN_MS = 5000;
 const DEFAULT_FILTERS = {
     type: [],
-    generation: null,
+    generation: [],
     legendary: null,
     mythical: null,
     hasEvolution: null,
@@ -169,7 +169,7 @@ class GameManager {
 
             player.game.filters = {
                 type: [],
-                generation: null,
+                generation: [],
                 legendary: null,
                 mythical: null,
                 hasEvolution: null,
@@ -565,7 +565,8 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
                 .map(player => ({
                     id: player.id,
                     name: player.name,
-                    score: player.score,
+                    // Guests always show 0
+                    score: player.isGuest ? 0 : player.score,
                     guesses: player.game.guesses,
                     cluesUsed: player.game.cluesUsed,
                     targetPokemon:
@@ -608,7 +609,7 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
 
             currentPlayer.game.filters = {
                 type: [],
-                generation: null,
+                generation: [],
                 legendary: null,
                 mythical: null,
                 hasEvolution: null,

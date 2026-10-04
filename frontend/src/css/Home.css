@@ -161,37 +161,38 @@
 }
 
 /* ===== TOP BAR — full width, đặc ở đầu trang, trong suốt khi scroll ===== */
-.home-container .top-bar {
+.top-bar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    width: auto;
-    max-width: none;
-    margin: 0;
+    width: 70%;
+    max-width: 70%;
+    margin: 0 auto;
     z-index: 60;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    background: #fffdf81e;
+    /* Only the bar background is translucent — logo & buttons stay fully visible */
+    background: rgba(255, 253, 248, 0.2);
     border: none;
-    border-bottom: 3px solid #2b3a5500;
-    border-radius: 0;
+    border-bottom: 3px solid rgba(43, 58, 85, 0.2);
+    border-radius: 0 0 16px 16px;
     padding: 12px 24px;
-    box-shadow: 0 4px 0 rgba(43, 58, 85, 0);
+    box-shadow: 0 4px 0 rgba(43, 58, 85, 0.08);
     transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Fallback khi không có GSAP: toggle class */
-.home-container .top-bar.scrolled {
+/* Fallback khi không có GSAP / reduced motion: chỉ nền mờ dần, chữ vẫn rõ */
+.top-bar.scrolled {
     background: transparent;
     border-bottom-color: transparent;
     box-shadow: none;
 }
 
 /* Khi GSAP điều khiển: tắt transition CSS để khỏi giật */
-.home-container .top-bar.gsap-on { transition: none; }
+.top-bar.gsap-on { transition: none; }
 
 .top-brand {
     display: flex;
@@ -221,6 +222,87 @@
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/* ===== AUTH: full buttons (unscrolled) vs single trigger (scrolled) ===== */
+.auth-full {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.auth-btn {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.8rem;
+    text-decoration: none;
+    white-space: nowrap;
+    color: #2B3A55;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 7px 18px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #2B3A55;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.auth-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 3px 3px 0 #2B3A55;
+}
+
+.auth-btn.primary {
+    background: #FFC93C;
+}
+
+.auth-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #2B3A55;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 4px 14px 4px 4px;
+}
+
+.auth-user .user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+/* Condensed (scrolled): hide full buttons, show the single trigger */
+.top-auth .user-dropdown {
+    display: none;
+}
+
+.top-bar.condensed .auth-full {
+    display: none;
+}
+
+.top-bar.condensed .user-dropdown {
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .auth-username {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .auth-btn {
+        padding: 6px 12px;
+        font-size: 0.72rem;
+    }
 }
 
 .auth-menu { display: flex; align-items: center; gap: 10px; }
@@ -253,6 +335,111 @@
 .settings-btn:active {
     transform: translate(2px, 2px);
     box-shadow: 1px 1px 0 #2B3A55;
+}
+
+/* ===== ACCOUNT DROPDOWN ===== */
+.user-dropdown { position: relative; }
+
+.dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: #ffffff;
+    border: 2.5px solid #2B3A55;
+    border-radius: 50%;
+    color: #2B3A55;
+    font-size: 1.05rem;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #2B3A55;
+    transition: all 0.15s ease;
+}
+
+.dropdown-trigger:hover {
+    background: #FFE9A8;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 #2B3A55;
+}
+
+.dropdown-trigger:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #2B3A55;
+}
+
+.user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFD93D, #FF9F1C);
+    color: #2B3A55;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 190px;
+    background: #FFFDF8;
+    border: 3px solid #2B3A55;
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 #2B3A55;
+    padding: 8px;
+    z-index: 80;
+    animation: menu-pop 0.18s ease;
+}
+
+@keyframes menu-pop {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-greet {
+    padding: 8px 12px;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #2B3A55;
+    border-bottom: 2px dashed rgba(43, 58, 85, 0.25);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #2B3A55;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: left;
+    transition: background 0.12s ease;
+}
+
+.dropdown-item i { width: 18px; text-align: center; }
+
+.dropdown-item:hover { background: #FFE9A8; }
+
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-menu { animation: none; }
 }
 
 /* ===== HERO ===== */
@@ -491,17 +678,20 @@
 .adventure-card {
     font-family: 'Nunito', sans-serif;
     border: 3px solid #2B3A55;
-    border-radius: 18px;
+    border-radius: 20px;
     box-shadow: 5px 5px 0 #2B3A55;
-    padding: 20px 18px;
+    padding: 22px 22px;
     cursor: pointer;
     text-align: left;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
     color: #2B3A55;
     transition: all 0.15s ease;
     position: relative;
+    min-height: 170px;
 }
 
 .adventure-card:hover {
@@ -519,23 +709,44 @@
 .adv-3 { background: #FDE9A8; transform: rotate(0.6deg); }
 .adv-4 { background: #D3EFD3; transform: rotate(-0.6deg); }
 
+.adv-text {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
 .adv-num {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
-    font-size: 0.85rem;
-    color: #5A6B8C;
+    font-size: 0.9rem;
+    color: #2B3A55;
 }
 
-.adv-icon { font-size: 2.4rem; line-height: 1; }
+.adv-icon { line-height: 1; display: inline-block; flex-shrink: 0; }
+
+.adv-icon img {
+    width: 128px;
+    height: 128px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 0 rgba(43, 58, 85, 0.18));
+    transition: transform 0.15s ease;
+}
+
+.adventure-card:hover .adv-icon img {
+    transform: scale(1.08) rotate(-3deg);
+}
 
 .adv-title {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
-    font-size: 1.15rem;
+    font-size: 1.3rem;
+    line-height: 1.2;
     color: #22304A;
 }
 
-.adv-desc { font-size: 0.85rem; font-weight: 600; color: #5A6B8C; }
+.adv-desc { font-size: 0.88rem; font-weight: 600; color: #3D4C6D; }
 
 /* ===== JOURNEY ===== */
 .journey {
@@ -1065,12 +1276,15 @@
     }
 
     .top-name { display: none; }
+    .top-bar { width: 92%; max-width: 92%; padding: 10px 16px; }
     .brand-title { font-size: clamp(1.9rem, 10vw, 2.6rem); }
     .brand-sub { letter-spacing: 0.14em; }
     .brand-header .btn-primary { min-width: 0; width: 100%; }
 
     .adventure-grid { grid-template-columns: 1fr; }
-    .adventure-card { transform: rotate(0deg); }
+    .adventure-card { transform: rotate(0deg); min-height: 0; padding: 18px; }
+    .adv-icon img { width: 96px; height: 96px; }
+    .adv-title { font-size: 1.1rem; }
 
     .journey-path { flex-wrap: wrap; row-gap: 18px; }
     .jline { display: none; }

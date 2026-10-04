@@ -108,23 +108,25 @@ async function filterPokemon(filters = {}) {
 
 
         // =================================================
-        // GENERATION
+        // GENERATION (single value or array — multi-select)
         // =================================================
 
-        if (
-            filters.generation !== null &&
-            filters.generation !== undefined
-        ) {
+        const requiredGenerations =
+            normalizeArray(filters.generation)
+                .map(Number)
+                .filter(
+                    (n) => !Number.isNaN(n)
+                );
 
-            const requiredGeneration =
-                Number(filters.generation);
+        if (requiredGenerations.length > 0) {
 
             const pokemonGeneration =
                 Number(metadata.generation);
 
             if (
-                pokemonGeneration !==
-                requiredGeneration
+                !requiredGenerations.includes(
+                    pokemonGeneration
+                )
             ) {
                 continue;
             }

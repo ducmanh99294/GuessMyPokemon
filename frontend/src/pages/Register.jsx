@@ -20,7 +20,7 @@ function Register() {
         setError("");
 
         if (password !== confirm) {
-            setError("Mật khẩu nhập lại không khớp.");
+            setError("Passwords do not match.");
             return;
         }
 
@@ -45,17 +45,17 @@ function Register() {
 
             <div className="auth-container">
                 <div className="auth-card">
-                    <h1 className="auth-title">Đăng ký</h1>
-                    <p className="auth-sub">Tạo tài khoản để lưu điểm và lên bảng xếp hạng.</p>
+                    <h1 className="auth-title">Sign Up</h1>
+                    <p className="auth-sub">Create an account to save scores and climb the leaderboard.</p>
 
                     <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
                         <div className="form-group">
-                            <label className="form-label" htmlFor="regName">Tên hiển thị</label>
+                            <label className="form-label" htmlFor="regName">Display Name</label>
                             <input
                                 id="regName"
                                 className="form-input"
                                 type="text"
-                                placeholder="Tên của bạn..."
+                                placeholder="Your name..."
                                 maxLength="20"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -78,7 +78,7 @@ function Register() {
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="regPassword">
-                                Mật khẩu (tối thiểu 6 ký tự)
+                                Password (min. 6 characters)
                             </label>
                             <input
                                 id="regPassword"
@@ -92,7 +92,7 @@ function Register() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" htmlFor="regConfirm">Nhập lại mật khẩu</label>
+                            <label className="form-label" htmlFor="regConfirm">Confirm Password</label>
                             <input
                                 id="regConfirm"
                                 className="form-input"
@@ -107,12 +107,12 @@ function Register() {
                         {error && <p className="auth-error">{error}</p>}
 
                         <button type="submit" className="btn-primary btn-auth" disabled={loading}>
-                            {loading ? "Đang đăng ký..." : "Đăng ký"}
+                            {loading ? "Signing up..." : "Sign Up"}
                         </button>
                     </form>
 
                     <p className="auth-switch">
-                        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+                        Already have an account? <Link to="/login">Log in</Link>
                     </p>
                 </div>
             </div>

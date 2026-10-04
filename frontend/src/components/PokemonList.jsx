@@ -17,7 +17,7 @@ function PokemonList({
     onGuess,
     guessing = false,
     disabled = false,
-    wrongGuesses = new Set() // ⭐ prop bị thiếu — thêm lại
+    wrongGuesses = new Set() // ⭐ missing prop — re-added
 }) {
     const [batchSize, setBatchSize] = useState(getBatchSize());
     const [visibleCount, setVisibleCount] = useState(getBatchSize());
@@ -62,13 +62,13 @@ function PokemonList({
                     className="pokemon-load-more"
                     onClick={() => setVisibleCount((prev) => prev + batchSize)}
                 >
-                    Xem thêm ({pokemon.length - visibleCount} còn lại)
+                    Show more ({pokemon.length - visibleCount} left)
                 </button>
             )}
 
             <div className="pokemon-list">
                 {visiblePokemon.map((item) => {
-                    const isWrong = wrongGuesses.has(item.id); // ⭐ khôi phục logic disable
+                    const isWrong = wrongGuesses.has(item.id); // ⭐ restored disable logic
 
                     return (
                         <PokemonCard
@@ -76,8 +76,8 @@ function PokemonList({
                             pokemon={item}
                             onGuess={onGuess}
                             guessing={guessing}
-                            disabled={disabled || isWrong} // ⭐ disable nếu đã đoán sai
-                            eliminated={isWrong} // ⭐ để PokemonCard style mờ/gạch
+                            disabled={disabled || isWrong} // ⭐ disable if guessed wrong
+                            eliminated={isWrong} // ⭐ lets PokemonCard dim/strike through
                         />
                     );
                 })}

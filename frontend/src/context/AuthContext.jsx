@@ -1,4 +1,4 @@
-// AuthContext.jsx - quản lý trạng thái đăng nhập toàn app
+// AuthContext.jsx - manages login state for the whole app
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
@@ -19,7 +19,7 @@ async function api(path, { method = "GET", body, token } = {}) {
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || json.success === false) {
-        throw new Error(json.message || "Có lỗi xảy ra, vui lòng thử lại.");
+        throw new Error(json.message || "Something went wrong, please try again.");
     }
 
     return json;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
         setUser(null);
     }, []);
 
-    // Khi có token (F5 hoặc vừa login), lấy lại thông tin user
+    // When a token exists (refresh or just logged in), refetch the user info
     useEffect(() => {
         if (!token) {
             setLoading(false);
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
                 if (!cancelled) setUser(json.user);
             })
             .catch(() => {
-                if (!cancelled) logout(); // token hỏng/hết hạn
+                if (!cancelled) logout(); // bad/expired token
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -103,11 +103,11 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth phải dùng trong <AuthProvider>");
+    if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
     return ctx;
 }
 
-// Helper: header Authorization cho các fetch cần đăng nhập
+// Helper: Authorization header for fetches that require login
 export function authHeader() {
     const token = localStorage.getItem(TOKEN_KEY);
     return token ? { Authorization: `Bearer ${token}` } : {};

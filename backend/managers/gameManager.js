@@ -189,8 +189,8 @@ class GameManager {
             player.game.totalWrongGuesses = 0;
             player.game.wrongGuessesByTarget= {};
 
-            // Hiện tại chọn player tiếp theo
-            // để đoán sẽ xử lý ở bước sau.
+            // Currently picking the next player
+            // to guess is handled in a later step.
             const players = room.players;
 
             for (let i = 0; i < players.length; i++) {
@@ -229,7 +229,7 @@ class GameManager {
 
                     connected:
                         player.connected,
-                    // Chỉ cho biết đã chọn hay chưa
+                    // Only tells whether a pick was made
                     hasSelectedPokemon:
                         !!player.game.targetPokemon,
 
@@ -365,9 +365,9 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
         };
     }
 
-    // ===== ĐOÁN SAI =====
+    // ===== WRONG GUESS =====
 
-    // ⭐ Track pokemon đã đoán sai (để frontend disable trên UI)
+    // ⭐ Track wrongly guessed pokemon (so the frontend can disable them in the UI)
     if (!room.wrongGuesses) {
         room.wrongGuesses = [];
     }
@@ -375,14 +375,14 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
         room.wrongGuesses.push(guessedPokemon.id);
     }
 
-    // ⭐ Tổng số lần đoán sai của CHÍNH người này (không phân biệt theo target)
+    // ⭐ Total wrong guesses of THIS player (regardless of target)
     player.game.totalWrongGuesses = (player.game.totalWrongGuesses || 0) + 1;
 
     let autoRevealed = false;
     let gameFinished = false;
     let revealedPokemon = null;
 
-    // ⭐ Đủ 5 lần sai -> CHÍNH người đoán bị lộ pokemon của mình (hình phạt)
+    // ⭐ 5 wrong guesses -> the GUESSER's own pokemon is revealed (penalty)
     if (player.game.totalWrongGuesses >= MAX_WRONG_GUESSES) {
         player.game.revealed = true;
         autoRevealed = true;
@@ -399,7 +399,7 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
         guessedPokemon,
         guesserName: player.name,
         targetPlayerId: targetPlayer.id,
-        revealedPlayerId: autoRevealed ? playerId : null, // ⭐ ai bị lộ (chính người đoán)
+        revealedPlayerId: autoRevealed ? playerId : null, // ⭐ who was revealed (the guesser)
         targetPokemon: autoRevealed ? revealedPokemon : null,
         score: 0,
         totalScore: player.score,
@@ -512,17 +512,17 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
                 filters[key];
         }
 
-        // Lưu filter
+        // Save the filter
         player.game.filters =
             updatedFilters;
 
-        // ⭐ Lọc Pokémon
+        // ⭐ Filter Pokémon
         const candidates =
             await pokemonFilterService.filterPokemon(
                 updatedFilters
             );
 
-        // ⭐ Cập nhật candidates
+        // ⭐ Update candidates
         player.game.candidates =
             candidates;
 
@@ -591,8 +591,8 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
             throw new Error("Player not found");
         }
 
-        // ⭐ Nếu phòng đã được rematch bởi người khác trước đó (status đã chuyển sang "choosing"),
-        // coi như thành công luôn, không throw lỗi và không reset lại lần nữa.
+        // ⭐ If the room was already rematched by someone else (status already "choosing"),
+        // treat it as success, don't throw and don't reset again.
         if (room.status === "choosing") {
             return room;
         }
@@ -625,7 +625,7 @@ guessPokemon(roomId, playerId, pokemonId, targetPlayerId) {
             currentPlayer.game.finished = false;
             currentPlayer.game.wrongGuesses = [];
             currentPlayer.game.totalWrongGuesses = 0;
-            currentPlayer.game.revealed = false; // ⭐ nhớ reset field này nếu đã thêm từ trước
+            currentPlayer.game.revealed = false; // ⭐ remember to reset this field if it was added before
         }
 
         room.status = "choosing";

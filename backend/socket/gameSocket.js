@@ -1,5 +1,41 @@
 const roomManager = require("../managers/roomManager");
 const gameManager = require("../managers/gameManager");
+const leaderboard = require("../managers/leaderboard");
+
+// Write 1 PVP entry per player when a pvp game ends.
+// Entry: mode="pvp", score = total game score, won = 1st place.
+async function recordPvpLeaderboard(room, scoreboard) {
+    const players = scoreboard?.players || [];
+
+    if (players.length === 0) {
+        return;
+    }
+
+    const winnerId = players[0].id;
+    const finishedAt = Date.now();
+
+    await Promise.all(
+        players.map((player) => {
+            const opponents = players
+                .filter((other) => other.id !== player.id)
+                .map((other) => other.name);
+
+            return leaderboard.addEntry({
+                mode: "pvp",
+                playerId: player.id,
+                playerName: player.name,
+                score: player.score,
+                won: player.id === winnerId && player.score > 0,
+                guesses: player.guesses,
+                cluesUsed: player.cluesUsed,
+                opponentName: opponents.join(", ") || null,
+                durationSeconds: Math.floor(
+                    (finishedAt - (room.createdAt || finishedAt)) / 1000
+                ),
+            });
+        })
+    );
+}
 
 function setupGameSocket(io) {
 
@@ -18,7 +54,7 @@ function setupGameSocket(io) {
                         throw new Error("Player ID is required");
                     }
 
-                    socket.playerId = playerId; // ⭐ THÊM
+                    socket.playerId = playerId; // ⭐ ADDED
 
                     const room =
                         roomManager.createRoom(
@@ -421,7 +457,7 @@ socket.on(
                 );
 
             // =========================================
-            // CALLBACK CHO NGƯỜI ĐOÁN
+            // CALLBACK FOR THE GUESSER
             // =========================================
 
             callback?.({
@@ -430,7 +466,7 @@ socket.on(
             });
 
             // =========================================
-            // BROADCAST KẾT QUẢ CHO CẢ PHÒNG
+            // BROADCAST THE RESULT TO THE WHOLE ROOM
             // =========================================
             io.to(roomId).emit(
                 "player_guess_result",
@@ -490,6 +526,19 @@ socket.on(
                     "game_finished",
                     scoreboard
                 );
+
+                // Write the PVP leaderboard for pvp rooms.
+                // Runs in the background; errors never affect the game response.
+                if (room.mode === "pvp") {
+                    recordPvpLeaderboard(room, scoreboard).catch(
+                        (error) => {
+                            console.error(
+                                "[pvp] leaderboard write failed:",
+                                error.message
+                            );
+                        }
+                    );
+                }
             }
 
         } catch (error) {
@@ -558,7 +607,7 @@ socket.on(
                     const room = gameManager.rematch(roomId, socket.playerId);
                     const publicRoom = gameManager.getPublicRoomState(room);
 
-                    io.to(roomId).emit("game_choosing", publicRoom); // vẫn OK khi gọi lặp lại
+                    io.to(roomId).emit("game_choosing", publicRoom); // still fine when called repeatedly
 
                     callback?.({ success: true });
                 filters.name} catch (error) {

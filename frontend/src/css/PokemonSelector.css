@@ -1,363 +1,333 @@
-/* ===== RESET & BASE ===== */
-* {
-    box-sizing: border-box;
-}
+/* =====================================================
+   POKEMON SELECTOR — chọn Pokémon bí mật (cartoon style)
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   ===================================================== */
 
 .selector-page {
     min-height: 100vh;
-    background: #080B14;
-    color: #f0f4ff;
-    font-family: 'Inter', sans-serif;
-    padding: 32px 20px 60px;
+    background: #FDF3DC;
+    font-family: 'Nunito', sans-serif;
+    color: #2B3A55;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    padding: 34px 20px 80px;
+    animation: fadeSlideUp 0.4s ease;
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .selector-container {
     width: 100%;
-    max-width: 1100px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    max-width: 1060px;
 }
 
-/* ===== HEADER ===== */
 .selector-header {
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 24px;
 }
 
 .selector-header h1 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Baloo 2', cursive;
     font-weight: 800;
-    font-size: clamp(1.8rem, 4.5vw, 2.6rem);
-    letter-spacing: 0.03em;          /* ⭐ giảm bớt letter-spacing quá rộng */
-    color: #ffd700;
-    text-shadow: 0 0 30px rgba(255, 215, 0, 0.12);
-    line-height: 1.15;
+    font-size: 1.9rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #22304A;
+    text-shadow: 2px 2px 0 rgba(255, 201, 60, 0.55);
+    margin-bottom: 8px;
 }
 
 .selector-header p {
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    color: #5A6B8C;
     font-size: 0.95rem;
-    line-height: 1.5;                /* ⭐ dễ đọc hơn */
-    max-width: 440px;
-    margin: 4px auto 0;
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto;
 }
 
-.selector-loading {
-    text-align: center;
-    padding: 80px 20px;
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 0.95rem;
-}
-
-/* ===== PLAYERS STRIP ===== */
+/* ===== PLAYERS STATUS ===== */
 .selector-players {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    padding: 14px 18px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
 }
 
 .selector-player-chip {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px 6px 8px;
-    border-radius: 30px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 0.8rem;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 6px 14px 6px 6px;
+    box-shadow: 2px 2px 0 rgba(43, 58, 85, 0.3);
+    font-weight: 800;
+    font-size: 0.85rem;
 }
 
 .selector-player-chip .avatar {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
+    background: linear-gradient(135deg, #FFE9A8, #FFC93C);
+    border: 2px solid #2B3A55;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Baloo 2', cursive;
+    font-size: 0.85rem;
 }
 
 .selector-player-chip .name {
-    color: #f0f4ff;
-    font-weight: 600;                /* ⭐ đậm hơn để nổi trên nền tối */
-    font-size: 0.82rem;
-    letter-spacing: 0.01em;
-}
-.selector-player-chip .state {
-    font-weight: 500;
-    font-size: 0.72rem;
-    letter-spacing: 0.02em;
+    color: #2B3A55;
 }
 
-.selector-player-chip.ready {
-    border-color: rgba(0, 200, 100, 0.2);
-    background: rgba(0, 200, 100, 0.05);
+.selector-player-chip .state {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+    padding: 2px 10px;
+    border: 2px solid #2B3A55;
 }
 
 .selector-player-chip.ready .state {
-    color: #4cdf8b;
+    background: #D8F3DC;
+    color: #2E7D32;
+    border-color: #7BC96F;
 }
 
 .selector-player-chip.waiting .state {
-    color: rgba(255, 255, 255, 0.2);
-}
-
-/* ===== SELECTED POKEMON BAR ===== */
-.selected-bar {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 14px 22px;
-    background: rgba(255, 215, 0, 0.03);
-    border: 1px solid rgba(255, 215, 0, 0.1);
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(255, 215, 0, 0.03);
-}
-
-.selected-bar img {
-    width: 56px;
-    height: 56px;
-    image-rendering: pixelated;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 50%;
-}
-
-.selected-bar .info {
-    flex: 1;
-    min-width: 0;
-}
-
-.selected-bar .label {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.62rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;          /* ⭐ eyebrow label nên spacing rộng hơn tên chính */
-    color: rgba(255, 215, 0, 0.45);
-}
-.selected-bar .name {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: 0.02em;
-    color: #ffd700;
-    text-transform: capitalize;
-    margin-top: 2px;
-}
-
-.selected-bar .confirm-btn {
-    background: linear-gradient(135deg, #ffd700 0%, #f0b800 100%);
-    color: #0d1220;
-    border: none;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 12px 26px;
-    border-radius: 14px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    flex-shrink: 0;
-}
-
-.selected-bar .confirm-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15);
-}
-
-.selected-bar .confirm-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    background: #FFF3D0;
+    color: #9A6B00;
+    border-color: #FFC93C;
 }
 
 /* ===== GRID SECTION ===== */
 .selector-grid-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 #2B3A55;
+    padding: 22px;
 }
 
 .selector-grid-header {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    padding: 0 4px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
 }
 
 .selector-grid-header h2 {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.1rem;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.03em;
+    color: #22304A;
 }
 
 .selector-grid-header .count {
-    font-size: 0.68rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.03);
-    padding: 2px 10px;
-    border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-}
-.pokemon-selector-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 10px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    background: #7EC8E3;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 2px 12px;
+    box-shadow: 2px 2px 0 #2B3A55;
 }
 
-.pokemon-selector-grid span {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.74rem;
-    font-weight: 600;                /* ⭐ đậm hơn, dễ đọc trên nền tối */
-    letter-spacing: 0.01em;
-    text-transform: capitalize;
-    text-align: center;
-    line-height: 1.25;
-    color: rgba(255, 255, 255, 0.65);
-    transition: color 0.15s ease;
+.pokemon-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 12px;
 }
 
 .pokemon-selector-grid button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 6px 8px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
     border-radius: 14px;
-    color: rgba(255, 255, 255, 0.55);
+    box-shadow: 3px 3px 0 #2B3A55;
+    padding: 10px 8px;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-    font-family: 'Inter', sans-serif;
+    transition: transform 0.12s ease;
+    font-family: 'Nunito', sans-serif;
 }
 
 .pokemon-selector-grid button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-3px);
+}
+
+.pokemon-selector-grid button:hover:not(:disabled) img {
+    transform: scale(1.1);
+}
+
+.pokemon-selector-grid button:hover:not(:disabled) span {
+    color: #E8554E;
 }
 
 .pokemon-selector-grid button:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
+    opacity: 0.45;
+    cursor: default;
 }
 
 .pokemon-selector-grid button.selected {
-    border-color: #ffd700;
-    background: rgba(255, 215, 0, 0.06);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
-    color: #ffd700;
+    border-color: #E8554E;
+    box-shadow: 3px 3px 0 #E8554E;
+    background: #FFF6DE;
+}
+
+.pokemon-selector-grid button.selected span {
+    color: #B33730;
 }
 
 .pokemon-selector-grid img {
-    width: 56px;
-    height: 56px;
-    image-rendering: pixelated;
+    width: 76px;
+    height: 76px;
+    object-fit: contain;
+    margin: 0 auto 4px;
+    display: block;
+    transition: transform 0.12s ease;
 }
 
 .pokemon-selector-grid span {
-    font-size: 0.72rem;
+    display: block;
+    font-weight: 800;
+    font-size: 0.78rem;
     text-transform: capitalize;
-    text-align: center;
-    line-height: 1.2;
+    color: #2B3A55;
 }
 
-/* ===== ERROR ===== */
+.selector-loading {
+    text-align: center;
+    padding: 40px 20px;
+    font-weight: 700;
+    color: #5A6B8C;
+}
+
 .selector-error {
+    background: #FFE3E1;
+    border: 3px solid #E8554E;
+    border-radius: 12px;
+    color: #B33730;
+    font-weight: 700;
+    padding: 12px 16px;
+    margin-bottom: 16px;
     text-align: center;
-    color: #ff8a8a;
-    background: rgba(255, 60, 60, 0.06);
-    border: 1px solid rgba(255, 60, 60, 0.1);
-    border-radius: 14px;
-    padding: 10px 16px;
-    font-size: 0.85rem;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== SELECTED BAR (sticky bottom) ===== */
+.selected-bar {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 18px;
+    box-shadow: 5px 5px 0 #2B3A55;
+    padding: 12px 18px;
+    max-width: calc(100vw - 32px);
+    animation: barUp 0.3s ease;
+}
+
+@keyframes barUp {
+    from { opacity: 0; transform: translate(-50%, 16px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.selected-bar img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    background: radial-gradient(circle, #FFF3D0 0%, #FFE9A8 70%);
+    border: 2px solid #2B3A55;
+    border-radius: 50%;
+    padding: 4px;
+}
+
+.selected-bar .info {
+    min-width: 0;
+}
+
+.selected-bar .label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8A94AD;
+}
+
+.selected-bar .name {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-transform: capitalize;
+    color: #22304A;
+}
+
+.selected-bar .confirm-btn {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: linear-gradient(180deg, #8FD694, #7BC96F);
+    color: #22304A;
+    border: 3px solid #2B3A55;
+    border-radius: 12px;
+    padding: 11px 24px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #2B3A55;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+}
+
+.selected-bar .confirm-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+.selected-bar .confirm-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #2B3A55;
+}
+
+.selected-bar .confirm-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
-    .selector-page {
-        padding: 20px 12px 40px;
-    }
-
-    .selected-bar {
-        flex-wrap: wrap;
-        text-align: center;
-        justify-content: center;
-    }
-
-    .selected-bar .confirm-btn {
-        width: 100%;
-    }
-
-    .pokemon-selector-grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    }
-
-    .pokemon-selector-grid img {
-        width: 44px;
-        height: 44px;
-    }
-
     .selector-header h1 {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
     }
 
-    .selector-header p {
-        font-size: 0.8rem;
-        padding: 0 8px;
-    }
-
-    .selector-players {
-        gap: 6px;
-        padding: 10px 12px;
-    }
-
-    .selector-player-chip {
-        font-size: 0.72rem;
-        padding: 4px 10px 4px 6px;
-    }
-
-    .selector-player-chip .avatar {
-        width: 20px;
-        height: 20px;
-        font-size: 0.6rem;
+    .selector-grid-section {
+        padding: 16px;
     }
 
     .selected-bar {
-        flex-wrap: wrap;
-        justify-content: center;
-        text-align: center;
         gap: 10px;
-        padding: 12px 16px;
-    }
-
-    .selected-bar img {
-        width: 44px;
-        height: 44px;
+        padding: 10px 14px;
     }
 
     .selected-bar .confirm-btn {
-        width: 100%;
+        padding: 10px 16px;
+        font-size: 0.8rem;
     }
 }

@@ -37,8 +37,8 @@ function Login() {
 
             <div className="auth-container">
                 <div className="auth-card">
-                    <h1 className="auth-title">Đăng nhập</h1>
-                    <p className="auth-sub">Chào mừng quay lại, nhà huấn luyện!</p>
+                    <h1 className="auth-title">Log In</h1>
+                    <p className="auth-sub">Welcome back, trainer!</p>
 
                     <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
                         <div className="form-group">
@@ -55,7 +55,7 @@ function Login() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" htmlFor="loginPassword">Mật khẩu</label>
+                            <label className="form-label" htmlFor="loginPassword">Password</label>
                             <input
                                 id="loginPassword"
                                 className="form-input"
@@ -70,12 +70,12 @@ function Login() {
                         {error && <p className="auth-error">{error}</p>}
 
                         <button type="submit" className="btn-primary btn-auth" disabled={loading}>
-                            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                            {loading ? "Logging in..." : "Log In"}
                         </button>
                     </form>
 
                     <p className="auth-switch">
-                        Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+                        No account yet? <Link to="/register">Sign up now</Link>
                     </p>
                 </div>
             </div>

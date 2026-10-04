@@ -26,7 +26,7 @@ function PokemonSelector({ room, onGameStarted }) {
     const [selecting, setSelecting] = useState(false);
     const [error, setError] = useState("");
 
-    // Filter chỉ dùng local trong màn hình chọn Pokémon
+    // Filter is only local to the Pokémon picker screen
     const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
     useEffect(() => {
@@ -90,11 +90,11 @@ function PokemonSelector({ room, onGameStarted }) {
     }
 
     /*
-     * Lấy types của Pokémon
-     * Hỗ trợ cả:
+     * Get a Pokémon's types
+     * Supports both:
      * ["fire", "flying"]
      *
-     * hoặc:
+     * or:
      * [{ name: "fire" }, { name: "flying" }]
      */
     function getPokemonTypes(item) {
@@ -322,7 +322,7 @@ function PokemonSelector({ room, onGameStarted }) {
                 if (!response?.success) {
                     setError(
                         response?.message ||
-                        "Không thể chọn Pokémon"
+                        "Could not pick Pokémon"
                     );
 
                     setSelecting(false);
@@ -344,7 +344,7 @@ function PokemonSelector({ room, onGameStarted }) {
         return (
             <div className="selector-page">
                 <p className="selector-loading">
-                    Đang tải danh sách Pokémon...
+                    Loading Pokémon list...
                 </p>
             </div>
         );
@@ -362,11 +362,11 @@ function PokemonSelector({ room, onGameStarted }) {
 
                 {/* HEADER */}
                 <header className="selector-header">
-                    <h1>Chọn Pokémon của bạn</h1>
+                    <h1>Pick Your Pokémon</h1>
 
                     <p>
-                        Chọn một Pokémon bí mật. Những người chơi khác
-                        sẽ không thấy lựa chọn của bạn.
+                        Pick a secret Pokémon. Other players
+                        won't see your pick.
                     </p>
                 </header>
 
@@ -393,8 +393,8 @@ function PokemonSelector({ room, onGameStarted }) {
 
                             <span className="state">
                                 {player.hasSelectedPokemon
-                                    ? "✓ Sẵn sàng"
-                                    : "Đang chọn..."}
+                                    ? "✓ Ready"
+                                    : "Picking..."}
                             </span>
                         </div>
                     ))}
@@ -412,7 +412,7 @@ function PokemonSelector({ room, onGameStarted }) {
 
                         <div className="info">
                             <div className="label">
-                                Pokémon của bạn
+                                Your Pokémon
                             </div>
 
                             <div className="name">
@@ -426,8 +426,8 @@ function PokemonSelector({ room, onGameStarted }) {
                             disabled={selecting}
                         >
                             {selecting
-                                ? "Đang chờ..."
-                                : "Xác nhận"}
+                                ? "Waiting..."
+                                : "Confirm"}
                         </button>
                     </section>
                 )}
@@ -457,7 +457,7 @@ function PokemonSelector({ room, onGameStarted }) {
                         {filteredPokemon.length === 0 ? (
                             <div className="no-pokemon">
                                 <p>
-                                    Không tìm thấy Pokémon phù hợp.
+                                    No matching Pokémon found.
                                 </p>
                             </div>
                         ) : (

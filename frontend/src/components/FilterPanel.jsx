@@ -51,7 +51,7 @@ function FilterPanel({
     */
 
     function handleUpdateFilter(key, value) {
-        // Update UI ngay lập tức thông qua GameRoom
+        // Update the UI immediately via GameRoom
         updateFilter(key, value);
     }
 

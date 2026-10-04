@@ -1,14 +1,14 @@
 // =====================================================
-// UserManager - quản lý tài khoản (đăng ký / đăng nhập)
+// UserManager - account management (register / login)
 //
-// Backend lưu trữ kép:
-// - Nếu MongoDB đã kết nối (MONGODB_URI): dùng collection "users".
-// - Nếu chưa: fallback về file JSON local
-//   backend/data/users.json (dev không cần cài gì thêm).
+// Dual storage backend:
+// - If MongoDB is connected (MONGODB_URI): use the "users" collection.
+// - Otherwise: fall back to the local JSON file
+//   backend/data/users.json (no setup needed for dev).
 //
-// Tất cả hàm public đều async để 2 backend dùng chung interface.
-// - Mật khẩu hash bằng bcrypt (không bao giờ lưu plaintext).
-// - Mỗi email chỉ đăng ký 1 lần (so sánh không phân biệt hoa/thường).
+// All public functions are async so both backends share one interface.
+// - Passwords hashed with bcrypt (never stored in plaintext).
+// - Each email can register once (case-insensitive comparison).
 // =====================================================
 
 const fs = require("fs");
@@ -57,7 +57,7 @@ function writeUsersJson(users) {
         fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2), "utf8");
     } catch (error) {
         console.error("[userManager] write failed:", error.message);
-        throw new Error("Không thể lưu dữ liệu người dùng.");
+        throw new Error("Could not save user data.");
     }
 }
 
@@ -67,8 +67,8 @@ function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
 }
 
-// Public shape: không bao giờ trả passwordHash ra ngoài.
-// Hỗ trợ cả doc Mongo (_id) và object JSON (id).
+// Public shape: never expose passwordHash.
+// Supports both Mongo docs (_id) and JSON objects (id).
 function toPublicUser(user) {
     if (!user) return null;
     return {
@@ -84,16 +84,16 @@ function validateRegisterInput({ name, email, password }) {
     const cleanEmail = normalizeEmail(email);
 
     if (cleanName.length < 2) {
-        throw new Error("Tên hiển thị phải có ít nhất 2 ký tự.");
+        throw new Error("Display name must be at least 2 characters.");
     }
     if (cleanName.length > MAX_NAME_LENGTH) {
-        throw new Error(`Tên hiển thị tối đa ${MAX_NAME_LENGTH} ký tự.`);
+        throw new Error(`Display name must be at most ${MAX_NAME_LENGTH} characters.`);
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-        throw new Error("Email không hợp lệ.");
+        throw new Error("Invalid email.");
     }
     if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
-        throw new Error(`Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`);
+        throw new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
     }
 
     return { name: cleanName, email: cleanEmail, password: String(password) };
@@ -115,7 +115,7 @@ async function findById(id) {
     if (!id) return null;
 
     if (mongo.isMongoReady()) {
-        // _id lưu dạng string uuid nên query trực tiếp bằng string
+        // _id is stored as a string uuid, so query directly with a string
         return mongo.getDb().collection("users").findOne({ _id: String(id) });
     }
 
@@ -126,13 +126,13 @@ async function createUser({ name, email, password }) {
     const input = validateRegisterInput({ name, email, password });
 
     if (await findByEmail(input.email)) {
-        throw new Error("Email này đã được đăng ký.");
+        throw new Error("This email is already registered.");
     }
 
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
 
     const doc = {
-        _id: crypto.randomUUID(), // string uuid, query trực tiếp không cần ObjectId
+        _id: crypto.randomUUID(), // string uuid, query directly without ObjectId
         name: input.name,
         email: input.email,
         passwordHash,
@@ -143,9 +143,9 @@ async function createUser({ name, email, password }) {
         try {
             await mongo.getDb().collection("users").insertOne(doc);
         } catch (error) {
-            // Phòng trường hợp race condition trùng email
+            // Guard against email race conditions
             if (error.code === 11000) {
-                throw new Error("Email này đã được đăng ký.");
+                throw new Error("This email is already registered.");
             }
             throw error;
         }
@@ -153,7 +153,7 @@ async function createUser({ name, email, password }) {
     }
 
     const users = readUsersJson();
-    // Chuẩn hoá object JSON: dùng field "id" như cũ
+    // Normalize the JSON object: use the "id" field as before
     const jsonUser = {
         id: doc._id,
         name: doc.name,

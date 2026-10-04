@@ -19,7 +19,7 @@ function Lobby() {
 
     useEffect(() => {
         if (!roomId) {
-            setError("Không tìm thấy mã phòng.");
+            setError("Room code not found.");
             return;
         }
 
@@ -34,7 +34,7 @@ function Lobby() {
                     if (!response?.success) {
                         setError(
                             response?.message ||
-                            "Không thể kết nối vào phòng."
+                            "Could not connect to the room."
                         );
                         return;
                     }
@@ -286,13 +286,13 @@ if (!room) {
                             className="room-retry-btn"
                             onClick={() => window.location.reload()}
                         >
-                            Thử lại
+                            Try Again
                         </button>
                     </>
                 ) : (
                     <>
                         <p className="room-loading-text">
-                            Đang kết nối vào phòng...
+                            Connecting to the room...
                         </p>
 
                         <div className="loading-dots">
@@ -334,7 +334,7 @@ if (!room) {
             </div>
 
             <div className="room-code-wrapper">
-                <span className="room-code-label">Phòng</span>
+                <span className="room-code-label">Room</span>
                 <span className="room-code-display" id="roomCodeDisplay">{room.roomId}</span>
                 <button className="copy-btn" id="copyRoomBtn" onClick={() => {navigator.clipboard.writeText(room.roomId)}}>
                 <i className="fas fa-copy"></i> <span id="copyText">Sao chép</span>
@@ -347,7 +347,7 @@ if (!room) {
                 onClick={leaveRoom}
             >
                 <i className="fas fa-sign-out-alt"></i>
-                Rời phòng
+                Leave Room
             </button>
             </header>
 
@@ -355,17 +355,17 @@ if (!room) {
 
             <aside className="sidebar">
                 <div className="info-card">
-                <div className="card-title">Thông tin phòng</div>
+                <div className="card-title">Room Info</div>
                 <div className="info-row">
-                    <span className="info-label">Mã phòng</span>
+                    <span className="info-label">Room Code</span>
                     <span className="info-value highlight" id="roomCodeInfo">{room.roomId}</span>
                 </div>
                 <div className="info-row">
-                    <span className="info-label">Người chơi</span>
+                    <span className="info-label">Players</span>
                     <span className="info-value" id="playerCountInfo">{room.players.length} / 4</span>
                 </div>
                 <div className="info-row">
-                    <span className="info-label">Chủ phòng</span>
+                    <span className="info-label">Host</span>
                     <span className="info-value" id="hostNameInfo">
                         {
                             room.players.find(
@@ -375,31 +375,31 @@ if (!room) {
                     </span>
                 </div>
                 <div className="info-row">
-                    <span className="info-label">Trạng thái</span>
+                    <span className="info-label">Status</span>
                     <span className="info-value">
-                    <span className="status-badge waiting" id="roomStatusBadge">● Đang chờ</span>
+                    <span className="status-badge waiting" id="roomStatusBadge">● Waiting</span>
                     </span>
                 </div>
                 </div>
 
                 <div className="info-card">
-                <div className="card-title">Cách chơi</div>
+                <div className="card-title">How to Play</div>
                 <div className="rules-list">
                     <div className="rule-item">
                     <span className="rule-num">01</span>
-                    <span className="rule-text">Chọn Pokémon bí mật</span>
+                    <span className="rule-text">Pick a secret Pokémon</span>
                     </div>
                     <div className="rule-item">
                     <span className="rule-num">02</span>
-                    <span className="rule-text">Đặt câu hỏi</span>
+                    <span className="rule-text">Ask questions</span>
                     </div>
                     <div className="rule-item">
                     <span className="rule-num">03</span>
-                    <span className="rule-text">Loại Pokémon bằng suy luận</span>
+                    <span className="rule-text">Eliminate Pokémon by deduction</span>
                     </div>
                     <div className="rule-item">
                     <span className="rule-num">04</span>
-                    <span className="rule-text">Đoán đúng để ghi điểm</span>
+                    <span className="rule-text">Guess right to score</span>
                     </div>
                 </div>
                 </div>
@@ -409,18 +409,18 @@ if (!room) {
 
                 <div className="room-header">
                 <div className="title-group">
-                    <h2>PHÒNG CHỜ</h2>
-                    <div className="sub" id="roomSubtitle">Chờ người chơi tham gia...</div>
+                    <h2>LOBBY</h2>
+                    <div className="sub" id="roomSubtitle">Waiting for players to join...</div>
                 </div>
                 <div className="room-status">
                     <span className="status-dot waiting" id="statusDot"></span>
-                    <span className="status-text" id="statusText">Đang chờ</span>
+                    <span className="status-text" id="statusText">Waiting</span>
                 </div>
                 </div>
 
                 <section className="players-section">
                 <div className="section-header">
-                    <h3>Người chơi</h3>
+                    <h3>Players</h3>
                     <span className="player-count" id="playerCountLabel">{room.players.length} / 4</span>
                 </div>
 
@@ -455,8 +455,8 @@ if (!room) {
                                     {player.connected === false
                                         ? "Offline"
                                         : player.hasSelectedPokemon
-                                        ? "Đã chọn Pokémon"
-                                        : "Đang chờ chọn"}
+                                        ? "Pokémon picked"
+                                        : "Waiting to pick"}
                                 </div>
                             </div>
 
@@ -482,14 +482,14 @@ if (!room) {
                             disabled={room.players.length < 1}
                         >
                             <i className="fas fa-play"></i>
-                            Bắt đầu trận đấu
+                            Start Match
                         </button>
                     )}
 
                     {room.hostId !== playerId && (
                         <div className="waiting-message">
                             <i className="fas fa-hourglass-half"></i>
-                            Đang chờ chủ phòng bắt đầu...
+                            Waiting for the host to start...
                         </div>
                     )}
                 </div>

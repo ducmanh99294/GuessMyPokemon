@@ -1,0 +1,163 @@
+/* =====================================================
+   GUEST WARNING MODAL (cartoon adventure style)
+   Popup cảnh báo khi chơi khách (chưa đăng nhập).
+   Dùng ở: Daily Challenge, đấu nhanh PVP.
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   ===================================================== */
+
+.guest-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(43, 58, 85, 0.45);
+    animation: guest-modal-fade 0.2s ease;
+}
+
+@keyframes guest-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.guest-modal {
+    position: relative;
+    width: 100%;
+    max-width: 410px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 22px;
+    box-shadow: 8px 8px 0 #2B3A55;
+    padding: 36px 30px;
+    text-align: center;
+    overflow: hidden;
+    animation: guest-modal-pop 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.guest-modal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, #FFC93C, #E8554E, #7EC8E3, #7BC96F);
+}
+
+@keyframes guest-modal-pop {
+    from { transform: scale(0.93) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.guest-modal-icon {
+    display: inline-block;
+    font-size: 48px;
+    margin-bottom: 14px;
+    animation: guest-modal-float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 0 rgba(43, 58, 85, 0.2));
+}
+
+@keyframes guest-modal-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.guest-modal-title {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: 0.03em;
+    color: #22304A;
+    margin-bottom: 12px;
+}
+
+.guest-modal-text {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.65;
+    color: #3D4C6D;
+    margin-bottom: 10px;
+}
+
+.guest-modal-text strong {
+    color: #B33730;
+    font-weight: 800;
+    background: #FFE3E1;
+    border-radius: 6px;
+    padding: 0 6px;
+}
+
+.guest-modal-hint {
+    color: #8A94AD;
+    font-size: 0.82rem;
+}
+
+.guest-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.guest-modal-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 3px solid #2B3A55;
+    transition: all 0.15s ease;
+}
+
+.guest-modal-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 #2B3A55;
+}
+
+.guest-modal-btn-login {
+    background: linear-gradient(180deg, #9ADCF0, #7EC8E3);
+    color: #22304A;
+    box-shadow: 4px 4px 0 #2B3A55;
+}
+
+.guest-modal-btn-login:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #2B3A55;
+    filter: brightness(1.05);
+}
+
+.guest-modal-btn-guest {
+    background: #FFFDF5;
+    color: #5A6B8C;
+    box-shadow: 4px 4px 0 rgba(43, 58, 85, 0.35);
+}
+
+.guest-modal-btn-guest:hover {
+    background: #FFF6DE;
+    color: #2B3A55;
+    transform: translate(-1px, -1px);
+}
+
+@media (max-width: 480px) {
+    .guest-modal {
+        padding: 28px 22px;
+    }
+
+    .guest-modal-icon {
+        font-size: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .guest-modal-overlay,
+    .guest-modal,
+    .guest-modal-icon {
+        animation: none;
+    }
+}

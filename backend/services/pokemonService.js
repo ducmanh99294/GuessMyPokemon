@@ -529,9 +529,9 @@ async function getPokemonMetadata(
 // =====================================================
 // PRELOAD POKEMON METADATA
 //
-// Thứ tự ưu tiên:
-//   1. MongoDB (nhanh, không phụ thuộc PokeAPI)
-//   2. PokeAPI (chậm) -> tự lưu vào MongoDB để lần sau nhanh
+// Priority order:
+//   1. MongoDB (fast, no PokeAPI dependency)
+//   2. PokeAPI (slow) -> auto-saved to MongoDB for next time
 // =====================================================
 
 async function preloadPokemonMetadata() {
@@ -550,7 +550,7 @@ async function preloadPokemonMetadata() {
 
 
     // =========================
-    // 1. THỬ ĐỌC TỪ MONGODB
+    // 1. TRY READING FROM MONGODB
     // =========================
 
     if (mongo.isMongoReady()) {
@@ -606,7 +606,7 @@ async function preloadPokemonMetadata() {
 
 
     // =========================
-    // 3. LƯU VÀO MONGODB
+    // 3. SAVE TO MONGODB
     // =========================
 
     if (mongo.isMongoReady()) {
@@ -638,7 +638,7 @@ async function preloadPokemonMetadata() {
 
 
 // =====================================================
-// PRELOAD FROM POKEAPI (luồng cũ, giữ nguyên logic)
+// PRELOAD FROM POKEAPI (old flow, logic kept)
 // =====================================================
 
 async function preloadFromPokeApi() {

@@ -37,22 +37,22 @@ function App() {
     return (
         <BrowserRouter>
             <Routes>
-                {/* Trang chủ */}
+                {/* Home */}
                 <Route path="/" element={<Home />} />
 
-                {/* Phòng chờ */}
+                {/* Lobby */}
                 <Route path="/lobby/:roomId" element={<Lobby />} />
 
-                {/* Phòng chơi */}
+                {/* Game room */}
                 <Route path="/game/:roomId" element={<GameRoom />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/solo" element={<Solo />} />
 
-                {/* Đấu nhanh PVP - bắt cặp ngẫu nhiên */}
+                {/* Quick PVP - random matchmaking */}
                 <Route path="/pvp" element={<PVP />} />
 
-                {/* Không tìm thấy trang */}
+                {/* Page not found */}
                 <Route
                     path="*"
                     element={<Home />}

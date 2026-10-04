@@ -1,0 +1,123 @@
+/* =====================================================
+   LEADERBOARD (daily / pvp) — cartoon adventure style
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   ===================================================== */
+
+.leaderboard-card {
+    position: relative;
+    width: 100%;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 #2B3A55;
+    padding: 26px 24px;
+    overflow: hidden;
+}
+
+.leaderboard-card h2 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #22304A;
+    text-align: center;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.leaderboard-card h2::before {
+    content: "🏆";
+    font-size: 1.3rem;
+}
+
+.leaderboard-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    counter-reset: lb-rank;
+}
+
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 3px 3px 0 rgba(43, 58, 85, 0.25);
+    transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.lb-row:hover {
+    transform: translateX(3px);
+    background: #FFF6DE;
+}
+
+.lb-row.lb-top {
+    background: linear-gradient(180deg, #FFF8DC, #FFE9A8);
+    border-width: 3px;
+}
+
+.lb-row.lb-top .lb-rank {
+    color: #E8930C;
+}
+
+.lb-rank {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #8A94AD;
+    min-width: 40px;
+    text-align: center;
+}
+
+.lb-name {
+    flex: 1;
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: #2B3A55;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-meta {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8A94AD;
+    white-space: nowrap;
+}
+
+.lb-date {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #B9C1D6;
+}
+
+.lb-score {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #E8930C;
+    background: #FFF3D0;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 1px 12px;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .leaderboard-card {
+        padding: 20px 16px;
+    }
+
+    .lb-meta {
+        display: none;
+    }
+}

@@ -1,143 +1,165 @@
-/* =========================================================
-   TYPE COLORS
-========================================================= */
+/* =====================================================
+   POKEMON CARD (cartoon adventure style)
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   Giữ nguyên type colors palette
+   ===================================================== */
 
-/* Xoá các rule .type-fire, .type-water... (1 class) cũ, thay bằng bản có 2 class như dưới */
-
-.pokemon-types .type.type-normal   { background: rgba(168, 168, 120, 0.18); color: #c6c6a7; }
-.pokemon-types .type.type-fire     { background: rgba(240, 128, 48, 0.18);  color: #ff9d55; }
-.pokemon-types .type.type-water    { background: rgba(104, 144, 240, 0.18); color: #6890f0; }
-.pokemon-types .type.type-electric { background: rgba(248, 208, 48, 0.18);  color: #f8d030; }
-.pokemon-types .type.type-grass    { background: rgba(120, 200, 80, 0.18);  color: #78c850; }
-.pokemon-types .type.type-ice      { background: rgba(152, 216, 216, 0.18); color: #98d8d8; }
-.pokemon-types .type.type-fighting { background: rgba(192, 48, 40, 0.18);   color: #e0524a; }
-.pokemon-types .type.type-poison   { background: rgba(160, 64, 160, 0.18);  color: #c060c0; }
-.pokemon-types .type.type-ground   { background: rgba(224, 192, 104, 0.18); color: #e0c068; }
-.pokemon-types .type.type-flying   { background: rgba(168, 144, 240, 0.18); color: #a890f0; }
-.pokemon-types .type.type-psychic  { background: rgba(248, 88, 136, 0.18);  color: #f96b96; }
-.pokemon-types .type.type-bug      { background: rgba(168, 184, 32, 0.18);  color: #a8b820; }
-.pokemon-types .type.type-rock     { background: rgba(184, 160, 56, 0.18);  color: #b8a038; }
-.pokemon-types .type.type-ghost    { background: rgba(112, 88, 152, 0.18);  color: #9070b8; }
-.pokemon-types .type.type-dragon   { background: rgba(112, 56, 248, 0.18);  color: #8560f8; }
-.pokemon-types .type.type-dark     { background: rgba(112, 88, 72, 0.18);   color: #8a7166; }
-.pokemon-types .type.type-steel    { background: rgba(184, 184, 208, 0.18); color: #c4c4d8; }
-.pokemon-types .type.type-fairy    { background: rgba(238, 153, 172, 0.18); color: #ffb6c7; }
 .pokemon-card {
     position: relative;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    padding: 10px;
-
-    min-height: 150px;
-
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-
-    background: rgba(255, 255, 255, 0.025);
-
-    transition:
-        transform 0.2s ease,
-        border-color 0.2s ease,
-        background 0.2s ease;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 #2B3A55;
+    padding: 12px 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.13s ease, box-shadow 0.13s ease;
+    overflow: hidden;
 }
 
-.pokemon-card.eliminated {
-    opacity: 0.35;
-    filter: grayscale(0.8);
-    pointer-events: none;
+.pokemon-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #FFC93C, #7EC8E3);
+    opacity: 0;
+    transition: opacity 0.15s ease;
 }
 
 .pokemon-card:hover {
-    transform: translateY(-3px);
-
-    border-color: rgba(255, 215, 0, 0.35);
-
-    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-4px);
+    box-shadow: 5px 7px 0 #2B3A55;
 }
 
-.pokemon-id {
-    align-self: flex-start;
-
-    font-size: 9px;
-    color: #6b7280;
+.pokemon-card:hover::before {
+    opacity: 1;
 }
 
-.pokemon-image {
-    width: 80px;
-    height: 80px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.pokemon-card:hover .pokemon-image {
+    transform: scale(1.1) rotate(-3deg);
 }
 
-.pokemon-image img {
-    width: 72px;
-    height: 72px;
+.pokemon-card:hover .pokemon-card-bg {
+    opacity: 1;
+    transform: scale(1.05);
+}
 
-    object-fit: contain;
-
-    image-rendering: pixelated;
+/* nền trang trí theo hệ */
+.pokemon-card-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.15s ease, transform 0.2s ease;
+    pointer-events: none;
 }
 
 .pokemon-card h3 {
-    margin: 2px 0 5px;
-
-    font-size: 12px;
-    font-weight: 700;
-
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.92rem;
     text-transform: capitalize;
-
-    color: #f3f4f6;
+    color: #22304A;
+    margin: 6px 0 2px;
+    position: relative;
 }
 
+.pokemon-id {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #fff;
+    background: #8A94AD;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 0 9px;
+    display: inline-block;
+    position: relative;
+}
+
+.pokemon-image {
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    margin: 6px auto 2px;
+    display: block;
+    position: relative;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 3px 0 rgba(43, 58, 85, 0.18));
+}
+
+.pokemon-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* type badges */
 .pokemon-types {
     display: flex;
-
+    gap: 5px;
     justify-content: center;
-
-    gap: 3px;
-
     flex-wrap: wrap;
+    margin-top: 6px;
+    position: relative;
 }
 
 .pokemon-types .type {
-    padding: 2px 5px;
-    margin-bottom: 7px;
-
-    border-radius: 4px;
-
-    font-size: 8px;
-    font-weight: 600;
-
-    text-transform: capitalize;
-
-    background: rgba(255, 255, 255, 0.08);
-    color: #d1d5db;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2B3A55;
+    background: #EBDDB8;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 1px 8px;
 }
 
+.pokemon-types .type.type-normal { background: #C6C6A7; }
+.pokemon-types .type.type-fire { background: #F5A65B; }
+.pokemon-types .type.type-water { background: #8FB8F5; }
+.pokemon-types .type.type-electric { background: #F7D02C; }
+.pokemon-types .type.type-grass { background: #8FD694; }
+.pokemon-types .type.type-ice { background: #B8E3E3; }
+.pokemon-types .type.type-fighting { background: #E08A80; }
+.pokemon-types .type.type-poison { background: #C58AC5; }
+.pokemon-types .type.type-ground { background: #EDD189; }
+.pokemon-types .type.type-flying { background: #C3B2F7; }
+.pokemon-types .type.type-psychic { background: #F78FB3; }
+.pokemon-types .type.type-bug { background: #C2D15A; }
+.pokemon-types .type.type-rock { background: #D1C17A; }
+.pokemon-types .type.type-ghost { background: #9E8FC7; }
+.pokemon-types .type.type-dragon { background: #9B7FF5; }
+.pokemon-types .type.type-dark { background: #9A8A7A; color: #FFFDF5; }
+.pokemon-types .type.type-steel { background: #CFCFDE; }
+.pokemon-types .type.type-fairy { background: #F0A8C8; }
+
+/* nút đoán */
 .pokemon-guess-btn {
-    margin-bottom: 7px;
-
-    padding: 5px 9px;
-
-    border: 0;
-    border-radius: 5px;
-
-    background: #ffd900;
-    color: rgb(248, 249, 255);
-
-    font-size: 9px;
-    font-weight: 700;
-
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: linear-gradient(180deg, #FFD94D, #FFC93C);
+    color: #2B3A55;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 6px 16px;
+    margin-top: 8px;
     cursor: pointer;
+    box-shadow: 2px 2px 0 #2B3A55;
+    transition: all 0.12s ease;
+    position: relative;
 }
 
-.pokemon-guess-btn:hover {
-    filter: brightness(1.1);
+.pokemon-guess-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
 }
 
 .pokemon-guess-btn:disabled {
@@ -145,33 +167,23 @@
     cursor: not-allowed;
 }
 
-/* ===== BACKGROUND IMAGE (nền theo type/cặp type) ===== */
-.pokemon-card {
-    position: relative; /* cần thiết để ảnh nền absolute định vị đúng trong card */
-    z-index: 0;
-}
-
-.pokemon-card-bg {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-    opacity: 0.55;
-
-    pointer-events: none;
-    border-radius: inherit;
-}
-
-/* Đảm bảo mọi nội dung khác nổi lên trên ảnh nền */
-.pokemon-card > .pokemon-id,
-.pokemon-card > .pokemon-image,
-.pokemon-card > h3,
-.pokemon-card > .pokemon-types,
 .pokemon-card > .pokemon-guess-btn {
-    position: relative;
-    z-index: 1;
+    width: calc(100% - 4px);
+}
+
+/* trạng thái */
+.pokemon-card.eliminated {
+    opacity: 0.4;
+    filter: grayscale(0.75);
+    cursor: default;
+}
+
+.pokemon-card.eliminated:hover {
+    transform: none;
+}
+
+.pokemon-card.selected {
+    border-color: #E8554E;
+    box-shadow: 4px 4px 0 #E8554E;
+    background: #FFF6DE;
 }

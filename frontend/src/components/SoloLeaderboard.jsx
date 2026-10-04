@@ -1,17 +1,18 @@
-// SoloLeaderboard.jsx - Bảng xếp hạng solo mode
+// SoloLeaderboard.jsx - Leaderboard by game mode
+// mode="daily" (default): daily challenge | mode="pvp": battle humans
 import { useEffect, useState } from "react";
 import "../css/SoloLeaderboard.css";
 
 function formatDate(iso) {
     try {
         const d = new Date(iso);
-        return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+        return d.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" });
     } catch {
         return "";
     }
 }
 
-function SoloLeaderboard({ refreshKey, apiBase }) {
+function SoloLeaderboard({ refreshKey, apiBase, mode = "daily" }) {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,7 @@ function SoloLeaderboard({ refreshKey, apiBase }) {
         let cancelled = false;
         setLoading(true);
 
-        fetch(`${base}/api/solo/leaderboard/top?limit=10`)
+        fetch(`${base}/api/${mode}/leaderboard/top?limit=10`)
             .then((r) => r.json())
             .then((json) => {
                 if (!cancelled && json?.success) setRows(json.data || []);
@@ -34,22 +35,22 @@ function SoloLeaderboard({ refreshKey, apiBase }) {
         return () => {
             cancelled = true;
         };
-    }, [refreshKey, base]);
+    }, [refreshKey, base, mode]);
 
     if (loading) {
         return (
             <section className="solo-card leaderboard-card">
-                <h2>Bảng xếp hạng</h2>
-                <p className="card-hint">Đang tải...</p>
+                <h2>Leaderboard</h2>
+                <p className="card-hint">Loading...</p>
             </section>
         );
     }
 
     return (
         <section className="solo-card leaderboard-card">
-            <h2>Bảng xếp hạng solo</h2>
+            <h2>{mode === "pvp" ? "PVP Leaderboard" : "Daily Challenge"}</h2>
             {rows.length === 0 ? (
-                <p className="card-hint">Chưa có ai chơi. Hãy là người đầu tiên!</p>
+                <p className="card-hint">No one has played yet. Be the first!</p>
             ) : (
                 <ol className="leaderboard-list">
                     {rows.map((row, i) => (
@@ -57,10 +58,25 @@ function SoloLeaderboard({ refreshKey, apiBase }) {
                             <span className="lb-rank">#{i + 1}</span>
                             <span className="lb-name">{row.playerName}</span>
                             <span className="lb-meta">
-                                {row.questionsUsed} câu · {row.wrongGuesses} sai ·{" "}
-                                {row.secretName ? `đáp án ${row.secretName}` : ""}
+                                {mode === "pvp" ? (
+                                    <>
+                                        {row.guesses} guesses ·{" "}
+                                        {row.won ? "won" : "lost"}
+                                        {row.opponentName
+                                            ? ` vs ${row.opponentName}`
+                                            : ""}
+                                    </>
+                                ) : (
+                                    <>
+                                        {row.questionsUsed} questions ·{" "}
+                                        {row.wrongGuesses} sai ·{" "}
+                                        {row.secretName
+                                            ? `answer ${row.secretName}`
+                                            : ""}
+                                    </>
+                                )}
                             </span>
-                            <span className="lb-score">{row.score}đ</span>
+                            <span className="lb-score">{row.score} pts</span>
                             <span className="lb-date">{formatDate(row.createdAt)}</span>
                         </li>
                     ))}

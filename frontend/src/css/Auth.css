@@ -1,71 +1,189 @@
-/* Auth.css - trang đăng nhập / đăng ký, đồng bộ vibe Home.css */
+/* =====================================================
+   AUTH — log in / sign up (cartoon adventure style)
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   Type: Baloo 2 (display) / Nunito (body)
+   ===================================================== */
+
 .auth-container {
     min-height: 100vh;
+    background: #FDF3DC;
+    background-image: radial-gradient(#EBDDB8 1.5px, transparent 1.5px);
+    background-size: 26px 26px;
+    font-family: 'Nunito', sans-serif;
+    color: #2B3A55;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
-    position: relative;
-    z-index: 1;
+    padding: 30px 18px;
 }
 
 .auth-card {
+    position: relative;
     width: 100%;
     max-width: 420px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 32px 28px;
-    backdrop-filter: blur(12px);
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 #2B3A55;
+    padding: 38px 32px 30px;
+    overflow: hidden;
+    animation: fadeSlideUp 0.4s ease;
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(90deg, #FFC93C, #E8554E, #7EC8E3, #7BC96F, #FFC93C);
+}
+
+.auth-card::after {
+    content: "🔑";
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    font-size: 1.6rem;
+    transform: rotate(12deg);
+    opacity: 0.85;
 }
 
 .auth-title {
-    font-size: 28px;
+    font-family: 'Baloo 2', cursive;
     font-weight: 800;
-    margin: 0 0 6px;
+    font-size: 1.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #22304A;
     text-align: center;
+    margin-bottom: 6px;
+    text-shadow: 2px 2px 0 rgba(255, 201, 60, 0.55);
 }
 
 .auth-sub {
     text-align: center;
-    opacity: 0.7;
-    margin: 0 0 24px;
-    font-size: 14px;
+    font-weight: 600;
+    color: #5A6B8C;
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    line-height: 1.55;
 }
 
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
-.btn-auth {
+.auth-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.auth-form .form-label {
+    font-weight: 800;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5A6B8C;
+}
+
+.auth-form .form-input {
     width: 100%;
-    margin-top: 8px;
-    padding: 12px;
-    font-size: 16px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2B3A55;
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.auth-form .form-input::placeholder {
+    color: #9AA5C0;
+    font-weight: 600;
+}
+
+.auth-form .form-input:focus {
+    outline: none;
+    background: #FFFFFF;
+    box-shadow: 3px 3px 0 #2B3A55;
 }
 
 .auth-error {
-    color: #ff6b6b;
-    font-size: 14px;
-    margin: 0;
+    background: #FFE3E1;
+    border: 3px solid #E8554E;
+    border-radius: 12px;
+    color: #B33730;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 10px 14px;
     text-align: center;
+}
+
+.btn-auth {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 3px solid #2B3A55;
+    border-radius: 14px;
+    cursor: pointer;
+    padding: 14px 24px;
+    width: 100%;
+    box-shadow: 4px 4px 0 #2B3A55;
+    transition: all 0.15s ease;
+    background: linear-gradient(180deg, #FFD94D, #FFC93C);
+    color: #2B3A55;
+    margin-top: 6px;
+}
+
+.btn-auth:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #2B3A55;
+    filter: brightness(1.04);
+}
+
+.btn-auth:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 #2B3A55;
+}
+
+.btn-auth:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .auth-switch {
     text-align: center;
-    margin: 20px 0 0;
-    font-size: 14px;
-    opacity: 0.85;
+    margin-top: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #5A6B8C;
 }
 
 .auth-switch a {
-    color: #ffd700;
-    font-weight: 700;
+    font-weight: 800;
+    color: #E8554E;
     text-decoration: none;
+    border-bottom: 2px solid #FFC93C;
+    transition: all 0.15s ease;
 }
 
 .auth-switch a:hover {
-    text-decoration: underline;
+    color: #B33730;
+    border-bottom-color: #E8554E;
+    background: #FFF3D0;
 }

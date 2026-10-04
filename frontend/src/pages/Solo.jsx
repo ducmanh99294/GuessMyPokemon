@@ -1,22 +1,28 @@
-// Solo.jsx - Trang chơi solo với máy
-// Luật: hỏi tối đa 20 câu Yes/No, đoán đúng càng sớm càng nhiều điểm.
-// Điểm = max(100, 1000 - sốCâuHỏi*45 - sốLầnĐoánSai*20)
-import { useEffect, useState } from "react";
+// Solo.jsx - Daily Challenge page (one shared secret Pokémon per day)
+// Rules: every day brings one secret Pokémon shared by everyone. Ask at most 20 Yes/No questions; the earlier you guess right, the more points.
+// Score = max(100, 1000 - questions*45 - wrongGuesses*20)
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { useAuth } from "../context/AuthContext";
 import SoloLeaderboard from "../components/SoloLeaderboard";
+import GuestWarningModal from "../components/GuestWarningModal";
 import "../css/Solo.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const GENERATIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 function Solo() {
-    const { user } = useAuth(); // null nếu chơi khách
+    const { user, token } = useAuth(); // null for guest play
+    const navigate = useNavigate();
+    const [showGuestWarning, setShowGuestWarning] = useState(false);
+    const guestAcked = useRef(false); // guest acknowledged this session
 
-    const [game, setGame] = useState(null); // public state từ server
+    const [game, setGame] = useState(null); // public state from server
     const [questions, setQuestions] = useState([]); // { key, label, needsValue }
     const [genValue, setGenValue] = useState("1");
+    const [freeQuestion, setFreeQuestion] = useState("");
     const [guessInput, setGuessInput] = useState("");
     const [playerName, setPlayerName] = useState(
         () => localStorage.getItem("pokemon_solo_name") || ""
@@ -25,21 +31,59 @@ function Solo() {
     const [error, setError] = useState("");
     const [lastGuess, setLastGuess] = useState(null); // { correct, ... }
     const [lbRefresh, setLbRefresh] = useState(0);
+    const [alreadyPlayed, setAlreadyPlayed] = useState(false); // finished today's challenge
 
-    // Đã đăng nhập -> game gắn với tài khoản (mỗi tài khoản 1 Pokémon
-    // bí mật, chống gian lận + dồn điểm leaderboard theo account).
-    // Chưa đăng nhập -> chơi khách bằng playerId ẩn danh như cũ.
+    // Logged in -> playerId namespaced by account id (server still
+    // verifies the JWT; this is only the socket/game key).
+    // Not logged in -> guest play with an anonymous playerId.
     const playerId = user ? `user_${user.id}` : getPlayerId();
     const finished = game && game.status !== "playing";
 
-    // Refresh leaderboard mỗi khi game kết thúc
+    // Identity changed (guest <-> logged in): clear stale state so the
+    // new identity gets a fresh check.
+    useEffect(() => {
+        setAlreadyPlayed(false);
+        setGame(null);
+        setError("");
+    }, [playerId]);
+
+    // Countdown to midnight (for the "already played" screen)
+    const [countdown, setCountdown] = useState("--:--:--");
+    useEffect(() => {
+        if (!alreadyPlayed) return;
+        const tick = () => {
+            const now = new Date();
+            const end = new Date(now);
+            end.setHours(24, 0, 0, 0);
+            const s = Math.max(0, Math.floor((end - now) / 1000));
+            const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+            const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+            const ss = String(s % 60).padStart(2, "0");
+            setCountdown(`${hh}:${mm}:${ss}`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [alreadyPlayed]);
+
+    // Refresh the leaderboard whenever a game ends
     useEffect(() => {
         if (finished) setLbRefresh((v) => v + 1);
     }, [finished]);
 
-    // Resume game đang chơi dở nếu user F5 giữa chừng
+    // Resume an in-progress game if the user refreshes mid-game,
+    // and check whether today's challenge is already finished.
     useEffect(() => {
         function fetchState() {
+            socket.emit(
+                "solo_played_today",
+                { playerId, authToken: token || null },
+                (res) => {
+                    if (res?.success && res.played) {
+                        setAlreadyPlayed(true);
+                    }
+                }
+            );
             socket.emit("solo_state", { playerId }, (res) => {
                 if (
                     res?.success &&
@@ -75,7 +119,24 @@ function Solo() {
     }
 
     function handleStart() {
+        // Not logged in -> warn that scores won't be saved (once per session)
+        if (!user && !guestAcked.current) {
+            setShowGuestWarning(true);
+            return;
+        }
+
+        doStart();
+    }
+
+    function handleGuestConfirm() {
+        guestAcked.current = true;
+        setShowGuestWarning(false);
+        doStart();
+    }
+
+    function doStart() {
         setError("");
+        setAlreadyPlayed(false);
         setLastGuess(null);
         setGuessInput("");
         setLoading(true);
@@ -84,17 +145,30 @@ function Solo() {
         if (!user && name) localStorage.setItem("pokemon_solo_name", name);
 
         ensureConnected(() => {
-            socket.emit("solo_start", { playerId, playerName: name }, (res) => {
-                setLoading(false);
+            // authToken lets the server verify the login and decide
+            // whether this game counts toward the leaderboard.
+            // Guests (no token) play for fun: score is not recorded.
+            socket.emit(
+                "solo_start",
+                { playerId, playerName: name, authToken: token || null },
+                (res) => {
+                    setLoading(false);
 
-                if (!res?.success) {
-                    setError(res?.message || "Không thể bắt đầu game.");
-                    return;
+                    if (!res?.success) {
+                        // One challenge per day: the server rejected the
+                        // start because today's game is already finished.
+                        if (res?.code === "ALREADY_PLAYED") {
+                            setAlreadyPlayed(true);
+                            return;
+                        }
+                        setError(res?.message || "Could not start the game.");
+                        return;
+                    }
+
+                    setGame(res.state);
+                    setQuestions(res.questions || []);
                 }
-
-                setGame(res.state);
-                setQuestions(res.questions || []);
-            });
+            );
         });
     }
 
@@ -111,13 +185,52 @@ function Solo() {
                 setLoading(false);
 
                 if (!res?.success) {
-                    setError(res?.message || "Không thể hỏi.");
+                    setError(res?.message || "Could not ask.");
                     return;
                 }
 
                 setGame(res.state);
             }
         );
+    }
+
+    function handleAskFreeText(e) {
+        if (e) e.preventDefault();
+        if (!game || game.status !== "playing" || loading) return;
+
+        const text = freeQuestion.trim();
+        if (!text) return;
+
+        setError("");
+        setLoading(true);
+
+        socket.emit(
+            "solo_ask",
+            { playerId, questionText: text },
+            (res) => {
+                setLoading(false);
+
+                if (!res?.success) {
+                    setError(res?.message || "Could not ask.");
+                    return;
+                }
+
+                // Server didn't understand -> no turn consumed, keep the question for editing
+                if (res.understood === false) {
+                    setError(res.message);
+                    return;
+                }
+
+                setFreeQuestion("");
+                setGame(res.state);
+            }
+        );
+    }
+
+    // Click a suggestion -> fill the input to edit/send
+    function fillSuggestion(text) {
+        setFreeQuestion(text);
+        setError("");
     }
 
     function handleGuess(e) {
@@ -127,7 +240,7 @@ function Solo() {
         const value = guessInput.trim();
 
         if (!value) {
-            setError("Vui lòng nhập tên hoặc ID Pokémon.");
+            setError("Please enter a Pokémon name or ID.");
             return;
         }
 
@@ -138,7 +251,7 @@ function Solo() {
             setLoading(false);
 
             if (!res?.success) {
-                setError(res?.message || "Không thể đoán.");
+                setError(res?.message || "Could not guess.");
                 return;
             }
 
@@ -158,7 +271,7 @@ function Solo() {
 
     function handleGiveUp() {
         if (!game || game.status !== "playing") return;
-        if (!window.confirm("Bỏ cuộc và xem đáp án?")) return;
+        if (!window.confirm("Give up and see the answer?")) return;
 
         socket.emit("solo_giveup", { playerId }, (res) => {
             if (res?.success) {
@@ -167,7 +280,59 @@ function Solo() {
         });
     }
 
-    // ---------------- Màn hình bắt đầu ----------------
+    // ---------------- Already played today ----------------
+    if (alreadyPlayed && !game) {
+        return (
+            <>
+                <div className="bg-layer" aria-hidden="true">
+                    <div className="radial-glow"></div>
+                    <div className="radial-glow-2"></div>
+                </div>
+
+                <div className="solo-container">
+                    <header className="solo-header">
+                        <h1 className="solo-title">DAILY CHALLENGE</h1>
+                        <p className="solo-sub">
+                            🎯 You&apos;ve already completed
+                            today&apos;s challenge!
+                        </p>
+                    </header>
+
+                    <div className="solo-card solo-result">
+                        <h1 className="result-win">See you tomorrow! 🌙</h1>
+                        <p className="card-hint">
+                            A new challenge unlocks at midnight.
+                            {!user && (
+                                <>
+                                    {" "}
+                                    Log in to save your scores and
+                                    compete on the leaderboard.
+                                </>
+                            )}
+                        </p>
+                        <div className="result-stats">
+                            <div>
+                                <span>Next challenge in</span>
+                                <strong>{countdown}</strong>
+                            </div>
+                        </div>
+                        {!user && (
+                            <button
+                                className="btn-primary btn-solo-start"
+                                onClick={() => navigate("/login")}
+                            >
+                                🔑 Log In
+                            </button>
+                        )}
+                    </div>
+
+                    <SoloLeaderboard refreshKey={lbRefresh} apiBase={API_BASE} />
+                </div>
+            </>
+        );
+    }
+
+    // ---------------- Start screen ----------------
     if (!game) {
         return (
             <>
@@ -182,33 +347,43 @@ function Solo() {
 
                 <div className="solo-container">
                     <header className="solo-header">
-                        <h1 className="solo-title">CHƠI SOLO</h1>
+                        <h1 className="solo-title">DAILY CHALLENGE</h1>
                         <p className="solo-sub">
-                            Máy đã chọn 1 Pokémon bí mật. Bạn có tối đa{" "}
-                            <span className="highlight">20 câu hỏi</span> Yes/No
-                            để suy luận.
+                            Every game hides a{" "}
+                            <span className="highlight">random Pokémon</span>.
+                            You have at most{" "}
+                            <span className="highlight">20 questions</span>{" "}
+                            Yes/No to deduce it.
+                            {!user && (
+                                <>
+                                    {" "}
+                                    Playing as guest — scores are only
+                                    saved when you{" "}
+                                    <strong>log in</strong>.
+                                </>
+                            )}
                         </p>
                     </header>
 
                     <div className="solo-card">
-                        <h2>Cách tính điểm</h2>
+                        <h2>Scoring</h2>
                         <ul className="solo-rules">
-                            <li>Đoán đúng càng sớm, điểm càng cao (tối đa 1000).</li>
-                            <li>Mỗi câu hỏi trừ 45 điểm.</li>
-                            <li>Mỗi lần đoán sai trừ 20 điểm.</li>
-                            <li>Thắng luôn được tối thiểu 100 điểm.</li>
-                            <li>Hết 20 câu mà chưa đoán đúng → thua.</li>
+                            <li>The earlier you guess right, the higher your score (max 1000).</li>
+                            <li>Each question costs 45 points.</li>
+                            <li>Each wrong guess costs 20 points.</li>
+                            <li>A win always earns at least 100 points.</li>
+                            <li>Out of 20 questions with no correct guess → you lose.</li>
                         </ul>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="soloName">
-                                Tên hiển thị trên bảng xếp hạng
+                                Display name on the leaderboard
                             </label>
                             <input
                                 id="soloName"
                                 className="form-input"
                                 type="text"
-                                placeholder="Nhập tên của bạn..."
+                                placeholder="Enter your name..."
                                 maxLength="20"
                                 value={user?.name || playerName}
                                 onChange={(e) => setPlayerName(e.target.value)}
@@ -216,7 +391,7 @@ function Solo() {
                             />
                             {user && (
                                 <p className="card-hint">
-                                    Đang dùng tên tài khoản của bạn.
+                                    Using your account name.
                                 </p>
                             )}
                         </div>
@@ -228,17 +403,25 @@ function Solo() {
                             onClick={handleStart}
                             disabled={loading}
                         >
-                            {loading ? "Đang bắt đầu..." : "Bắt đầu chơi solo"}
+                            {loading ? "Starting..." : "Start Today's Challenge"}
                         </button>
                     </div>
 
                     <SoloLeaderboard refreshKey={lbRefresh} apiBase={API_BASE} />
+
+                    <GuestWarningModal
+                        open={showGuestWarning}
+                        mode="daily"
+                        onConfirm={handleGuestConfirm}
+                        onGoLogin={() => navigate("/login")}
+                        onDismiss={() => setShowGuestWarning(false)}
+                    />
                 </div>
             </>
         );
     }
 
-    // ---------------- Màn hình kết quả ----------------
+    // ---------------- Result screen ----------------
     if (finished) {
         const won = game.status === "won";
         const secret = game.secret || {};
@@ -254,10 +437,10 @@ function Solo() {
                     <div className="solo-card solo-result">
                         <h1 className={won ? "result-win" : "result-lose"}>
                             {won
-                                ? "🎉 Đoán đúng rồi!"
+                                ? "🎉 You guessed it!"
                                 : game.status === "gaveup"
-                                  ? "Bạn đã bỏ cuộc"
-                                  : "😢 Hết lượt hỏi!"}
+                                  ? "You gave up"
+                                  : "😢 Out of questions!"}
                         </h1>
 
                         {secret.sprite && (
@@ -275,34 +458,50 @@ function Solo() {
 
                         {secret.types?.length > 0 && (
                             <p className="secret-types">
-                                Hệ: {secret.types.join(" / ")}
+                                Type: {secret.types.join(" / ")}
                                 {secret.generation &&
-                                    ` · Thế hệ ${secret.generation}`}
+                                    ` · Generation ${secret.generation}`}
                             </p>
                         )}
 
                         <div className="result-stats">
                             <div>
-                                <span>Số câu đã hỏi</span>
+                                <span>Questions asked</span>
                                 <strong>{game.questionsCount}</strong>
                             </div>
                             <div>
-                                <span>Đoán sai</span>
+                                <span>Wrong guesses</span>
                                 <strong>{game.wrongGuesses}</strong>
                             </div>
                             <div>
-                                <span>Điểm</span>
+                                <span>Score</span>
                                 <strong className="score">{game.score}</strong>
                             </div>
                         </div>
+
+                        {game.scored === false && (
+                            <p className="card-hint">
+                                🔑 You played as a guest — this score was
+                                not saved. Log in to compete on the
+                                leaderboard.
+                            </p>
+                        )}
 
                         <button
                             className="btn-primary btn-solo-start"
                             onClick={handleStart}
                             disabled={loading}
                         >
-                            {loading ? "Đang bắt đầu..." : "Chơi lại"}
+                            {loading ? "Starting..." : "Play Again"}
                         </button>
+                        {game.scored === false && (
+                            <button
+                                className="btn-secondary btn-solo-start"
+                                onClick={() => navigate("/login")}
+                            >
+                                🔑 Log In
+                            </button>
+                        )}
                     </div>
 
                     <SoloLeaderboard refreshKey={lbRefresh} apiBase={API_BASE} />
@@ -311,7 +510,7 @@ function Solo() {
         );
     }
 
-    // ---------------- Màn hình chơi ----------------
+    // ---------------- Game screen ----------------
     const progress = Math.round(
         (game.questionsCount / game.maxQuestions) * 100
     );
@@ -329,13 +528,18 @@ function Solo() {
 
             <div className="solo-container">
                 <header className="solo-header">
-                    <h1 className="solo-title">CHƠI SOLO</h1>
+                    <h1 className="solo-title">DAILY CHALLENGE</h1>
                     <p className="solo-sub">
-                        Còn{" "}
+                        {new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                        })}{" "}
+                        · Left{" "}
                         <span className="highlight">
                             {game.questionsLeft}
                         </span>{" "}
-                        câu hỏi · Đoán sai {game.wrongGuesses} lần
+                        questions · {game.wrongGuesses} wrong guesses
                     </p>
                     <div className="progress-bar">
                         <div
@@ -349,17 +553,45 @@ function Solo() {
 
                 {lastGuess && !lastGuess.correct && (
                     <p className="guess-feedback wrong">
-                        ❌ Đoán sai rồi! Đã đoán sai {lastGuess.wrongGuesses}{" "}
-                        lần (-20 điểm mỗi lần).
+                        ❌ Wrong guess! {lastGuess.wrongGuesses} wrong{" "}
+                        so far (-20 points each).
                     </p>
                 )}
 
                 <div className="solo-grid">
-                    {/* Cột câu hỏi */}
+                    {/* Question column */}
                     <section className="solo-card">
-                        <h2>Đặt câu hỏi</h2>
+                        <h2>Ask a Question</h2>
                         <p className="card-hint">
-                            Bấm vào câu hỏi để máy trả lời Có / Không
+Type your own Yes/No question
+                        </p>
+
+                        <form
+                            className="free-ask-row"
+                            onSubmit={handleAskFreeText}
+                        >
+                            <input
+                                className="form-input free-ask-input"
+                                type="text"
+                                placeholder="e.g. Is it a fire type?"
+                                maxLength={120}
+                                value={freeQuestion}
+                                onChange={(e) =>
+                                    setFreeQuestion(e.target.value)
+                                }
+                                disabled={loading}
+                            />
+                            <button
+                                type="submit"
+                                className="btn-secondary"
+                                disabled={loading || !freeQuestion.trim()}
+                            >
+                                Ask
+                            </button>
+                        </form>
+
+                        <p className="card-hint suggestion-title">
+                            💡 Suggestions — click to fill the question box:
                         </p>
 
                         <div className="question-list">
@@ -376,8 +608,11 @@ function Solo() {
                                                 "question-btn" +
                                                 (asked ? " asked" : "")
                                             }
-                                            onClick={() => handleAsk(q.key)}
+                                            onClick={() =>
+                                                fillSuggestion(q.label)
+                                            }
                                             disabled={loading}
+                                            title="Click to fill the question box"
                                         >
                                             {q.label}
                                         </button>
@@ -386,7 +621,7 @@ function Solo() {
                         </div>
 
                         <div className="gen-ask">
-                            <label htmlFor="genSelect">Hỏi theo thế hệ:</label>
+                            <label htmlFor="genSelect">Ask by generation:</label>
                             <div className="gen-ask-row">
                                 <select
                                     id="genSelect"
@@ -397,26 +632,28 @@ function Solo() {
                                 >
                                     {GENERATIONS.map((g) => (
                                         <option key={g} value={String(g)}>
-                                            Thế hệ {g}
+                                            Generation {g}
                                         </option>
                                     ))}
                                 </select>
                                 <button
                                     className="btn-secondary"
                                     onClick={() =>
-                                        handleAsk("generation", genValue)
+                                        fillSuggestion(
+                                            `Is this Pokémon from generation ${genValue}?`
+                                        )
                                     }
                                     disabled={loading}
                                 >
-                                    Hỏi
+                                    Fill suggestion
                                 </button>
                             </div>
                         </div>
                     </section>
 
-                    {/* Cột đoán + lịch sử */}
+                    {/* Guess + history column */}
                     <section className="solo-card">
-                        <h2>Đoán Pokémon</h2>
+                        <h2>Guess Pokémon</h2>
                         <form
                             className="guess-form"
                             onSubmit={handleGuess}
@@ -425,7 +662,7 @@ function Solo() {
                             <input
                                 className="form-input"
                                 type="text"
-                                placeholder="Nhập tên hoặc ID, vd: pikachu / 25"
+                                placeholder="Enter name or ID, e.g. pikachu / 25"
                                 value={guessInput}
                                 onChange={(e) =>
                                     setGuessInput(e.target.value)
@@ -436,21 +673,29 @@ function Solo() {
                                 className="btn-primary"
                                 disabled={loading}
                             >
-                                Đoán
+                                Guess
                             </button>
                         </form>
 
-                        <h2 className="history-title">Lịch sử hỏi đáp</h2>
+                        <h2 className="history-title">Q&A History</h2>
                         {game.history.length === 0 ? (
                             <p className="card-hint">
-                                Chưa hỏi câu nào. Hãy bắt đầu suy luận!
+                                No questions yet. Start deducing!
                             </p>
                         ) : (
                             <ul className="history-list">
                                 {game.history.map((h, i) => (
                                     <li key={i} className="history-item">
                                         <span className="history-q">
-                                            {i + 1}. {h.label}
+                                            {i + 1}.{" "}
+                                            {h.questionText || h.label}
+                                            {h.questionText &&
+                                                h.questionText !== h.label && (
+                                                    <span className="history-interpreted">
+                                                        {" "}
+                                                        → understood as: {h.label}
+                                                    </span>
+                                                )}
                                         </span>
                                         <span
                                             className={
@@ -458,7 +703,7 @@ function Solo() {
                                                 (h.answer ? "yes" : "no")
                                             }
                                         >
-                                            {h.answer ? "Có" : "Không"}
+                                            {h.answer ? "Yes" : "No"}
                                         </span>
                                     </li>
                                 ))}
@@ -469,7 +714,7 @@ function Solo() {
                             className="btn-giveup"
                             onClick={handleGiveUp}
                         >
-                            Bỏ cuộc, xem đáp án
+                            Give up, see answer
                         </button>
                     </section>
                 </div>

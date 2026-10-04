@@ -47,7 +47,7 @@
 //                 disabled={disabled || guessing || eliminated}
 //                 onClick={() => onGuess?.(pokemon)}
 //             >
-//                 {eliminated ? "Đã sai" : guessing ? "..." : "Guess"}
+//                 {eliminated ? "Wrong" : guessing ? "..." : "Guess"}
 //             </button>
 
 //         </div>
@@ -73,20 +73,20 @@ function PokemonCard({
 
     function handleBgError() {
         if (isDual && fallbackStep === 0) {
-            // ⭐ Bước 1: thử đảo thứ tự cặp (VD: flying-fire thay vì fire-flying)
+            // ⭐ Step 1: try swapping the pair order (e.g. flying-fire instead of fire-flying)
             setBgSrc(`/patterns/dual/${types[1]}-${types[0]}.png`);
             setFallbackStep(1);
             return;
         }
 
         if (fallbackStep <= 1) {
-            // ⭐ Bước 2: fallback về ảnh mono theo type đầu tiên
+            // ⭐ Step 2: fall back to the mono image of the first type
             setBgSrc(`/patterns/mono/${types[0] || "normal"}.png`);
             setFallbackStep(2);
             return;
         }
 
-        // ⭐ Bước 3: hết cách, ẩn ảnh nền luôn (không vỡ layout)
+        // ⭐ Step 3: last resort, hide the bg image entirely (no broken layout)
         setBgSrc(null);
     }
 
@@ -144,7 +144,7 @@ function PokemonCard({
                 // disabled={disabled || guessing || eliminated}
                 onClick={() => onGuess?.(pokemon)}
             >
-                {/* {eliminated ? "Đã sai" : guessing ? "..." : "Guess"} */}
+                {/* {eliminated ? "Wrong" : guessing ? "..." : "Guess"} */}
                 {"Guess"}
             </button>
 

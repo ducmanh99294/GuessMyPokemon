@@ -1,141 +1,291 @@
-/* PVP.css - Trang đấu nhanh bắt cặp ngẫu nhiên */
+/* =====================================================
+   PVP — quick match (cartoon adventure style)
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   Type: Baloo 2 (display) / Nunito (body)
+   ===================================================== */
 
 .pvp-container {
     min-height: 100vh;
+    background: #FDF3DC;
+    font-family: 'Nunito', sans-serif;
+    color: #2B3A55;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 24px;
+    justify-content: flex-start;
+    padding: 40px 20px 60px;
+    animation: fadeSlideUp 0.4s ease;
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .pvp-card {
+    position: relative;
     width: 100%;
-    max-width: 440px;
+    max-width: 520px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 #2B3A55;
+    padding: 40px 34px;
     text-align: center;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 40px 32px;
-    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.pvp-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(90deg, #E8554E, #FFC93C, #7BC96F, #7EC8E3, #E8554E);
+}
+
+.pvp-card::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    right: 20px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.6);
 }
 
 .pvp-icon {
     font-size: 56px;
     margin-bottom: 12px;
+    display: inline-block;
+    animation: pvp-bob 2.6s ease-in-out infinite;
+    filter: drop-shadow(0 4px 0 rgba(43, 58, 85, 0.2));
+}
+
+@keyframes pvp-bob {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-8px) rotate(4deg); }
 }
 
 .pvp-title {
-    margin: 0 0 8px;
-    font-size: 28px;
-    letter-spacing: 1px;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #22304A;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 0 rgba(255, 201, 60, 0.55);
 }
 
 .pvp-sub {
-    margin: 0 0 20px;
-    opacity: 0.75;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #5A6B8C;
     line-height: 1.6;
-    font-size: 14px;
+    margin-bottom: 22px;
+}
+
+.pvp-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #5A6B8C;
+    margin-bottom: 18px;
+    cursor: pointer;
+}
+
+.pvp-check input {
+    width: 20px;
+    height: 20px;
+    accent-color: #E8554E;
+    cursor: pointer;
 }
 
 .pvp-input {
     width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 16px;
+    background: #FFFDF5;
+    border: 3px solid #2B3A55;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(0, 0, 0, 0.3);
-    color: inherit;
-    font-size: 15px;
-    outline: none;
-    box-sizing: border-box;
+    padding: 13px 15px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2B3A55;
+    margin-bottom: 16px;
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.pvp-input::placeholder {
+    color: #9AA5C0;
+    font-weight: 600;
 }
 
 .pvp-input:focus {
-    border-color: rgba(255, 255, 255, 0.4);
+    outline: none;
+    background: #FFFFFF;
+    box-shadow: 3px 3px 0 #2B3A55;
 }
 
-.pvp-btn {
-    display: block;
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 12px;
-    border: none;
+.pvp-error {
+    background: #FFE3E1;
+    border: 3px solid #E8554E;
     border-radius: 12px;
-    font-size: 16px;
+    color: #B33730;
     font-weight: 700;
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+}
+
+/* ===== BUTTONS ===== */
+.pvp-btn {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 3px solid #2B3A55;
+    border-radius: 14px;
     cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    width: 100%;
+    box-shadow: 4px 4px 0 #2B3A55;
+    transition: all 0.15s ease;
 }
 
 .pvp-btn:active {
-    transform: scale(0.98);
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 #2B3A55;
 }
 
 .pvp-btn-find {
-    background: linear-gradient(135deg, #ef4444, #f59e0b);
-    color: #fff;
+    background: linear-gradient(180deg, #FF8A80, #E8554E);
+    color: #FFFFFF;
+    text-shadow: 1px 1px 0 rgba(43, 58, 85, 0.35);
+    margin-bottom: 10px;
+}
+
+.pvp-btn-find:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #2B3A55;
+    filter: brightness(1.05);
+}
+
+.pvp-btn-find:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pvp-btn-cancel {
+    background: #FFFDF5;
+    color: #2B3A55;
+}
+
+.pvp-btn-cancel:hover {
+    background: #FFE9A8;
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #2B3A55;
 }
 
 .pvp-btn-ghost {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: inherit;
-    font-weight: 500;
+    border: 2px dashed #B9C1D6;
+    box-shadow: none;
+    color: #8A94AD;
+    font-size: 0.85rem;
+    margin-top: 14px;
 }
 
-.pvp-btn-cancel {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: inherit;
-    margin-top: 16px;
+.pvp-btn-ghost:hover {
+    color: #2B3A55;
+    border-color: #2B3A55;
+    background: #FFF6DE;
 }
 
-.pvp-error {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    color: #fca5a5;
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 16px;
-    font-size: 14px;
-}
-
+/* ===== SEARCHING ===== */
 .pvp-searching {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    padding: 10px 0 4px;
 }
 
 .pvp-spinner {
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
     border-radius: 50%;
-    border: 4px solid rgba(255, 255, 255, 0.15);
-    border-top-color: #f59e0b;
-    animation: pvp-spin 0.9s linear infinite;
-    margin-bottom: 16px;
+    background:
+        radial-gradient(circle at 50% 50%, #FFFDF5 18%, transparent 19%),
+        linear-gradient(to bottom, #E8554E 46%, #2B3A55 46%, #2B3A55 54%, #FFFDF5 54%);
+    border: 3px solid #2B3A55;
+    animation: pvp-spin 1s linear infinite;
+    box-shadow: 3px 3px 0 #2B3A55;
 }
 
 @keyframes pvp-spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
-.pvp-timer {
-    font-size: 34px;
+.pvp-searching p {
     font-weight: 800;
-    font-variant-numeric: tabular-nums;
+    color: #5A6B8C;
     margin-bottom: 8px;
 }
 
-.pvp-matched {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+.pvp-timer {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: #E8930C;
+    background: #FFF3D0;
+    border: 2px solid #2B3A55;
+    border-radius: 12px;
+    display: inline-block;
+    padding: 2px 18px;
+    margin-bottom: 16px;
+    box-shadow: 3px 3px 0 #2B3A55;
 }
 
-.pvp-check {
-    font-size: 52px;
+/* ===== MATCHED ===== */
+.pvp-matched {
+    padding: 14px 0 4px;
+    animation: fadeSlideUp 0.35s ease;
+}
+
+.pvp-matched p {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #3D4C6D;
+    margin-bottom: 6px;
+}
+
+.pvp-matched strong {
+    font-family: 'Baloo 2', cursive;
+    color: #E8554E;
+    font-size: 1.25rem;
+}
+
+.pvp-lb {
+    width: 100%;
+    max-width: 520px;
+    margin-top: 24px;
+}
+
+@media (max-width: 520px) {
+    .pvp-card {
+        padding: 30px 22px;
+    }
+
+    .pvp-title {
+        font-size: 1.35rem;
+    }
 }

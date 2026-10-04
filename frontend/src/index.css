@@ -1,9 +1,201 @@
+/* =====================================================
+   GUESS MY POKEMON — Design System
+   "Cartoon Adventure" theme: giấy #FDF3DC, mực #2B3A55,
+   vàng #FFC93C, đỏ #E8554E, xanh #7EC8E3, lá #7BC96F
+   Type: Baloo 2 (display) / Nunito (body)
+   ===================================================== */
+
+:root {
+    /* ---- palette ---- */
+    --paper: #FDF3DC;
+    --card: #FFFDF5;
+    --ink: #2B3A55;
+    --ink-soft: #22304A;
+    --muted: #5A6B8C;
+    --faint: #8A94AD;
+
+    --yellow: #FFC93C;
+    --yellow-soft: #FFE9A8;
+    --red: #E8554E;
+    --blue: #7EC8E3;
+    --green: #7BC96F;
+    --orange: #E8930C;
+
+    /* ---- shadows ---- */
+    --shadow-chunky: 6px 6px 0 #2B3A55;
+    --shadow-btn: 4px 4px 0 #2B3A55;
+
+    /* ---- radius / fonts ---- */
+    --r-lg: 22px;
+    --r-md: 16px;
+    --r-sm: 12px;
+    --font-display: 'Baloo 2', cursive;
+    --font-body: 'Nunito', sans-serif;
+}
+
 * {
     box-sizing: border-box;
 }
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
+html {
+    scroll-behavior: smooth;
 }
 
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--paper);
+    background-image: radial-gradient(#EBDDB8 1.2px, transparent 1.2px);
+    background-size: 28px 28px;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+#root {
+    position: relative;
+    z-index: 1;
+}
+
+/* ---- selection ---- */
+::selection {
+    background: rgba(255, 201, 60, 0.55);
+    color: #2B3A55;
+}
+
+/* ---- scrollbar ---- */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F3EAD0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #D9CFB4;
+    border-radius: 8px;
+    border: 2px solid #F3EAD0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #FFC93C;
+}
+
+/* ---- focus ---- */
+:focus-visible {
+    outline: 3px solid rgba(255, 201, 60, 0.8);
+    outline-offset: 2px;
+}
+
+/* ---- shared animations ---- */
+@keyframes rise-in {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pop-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes sprite-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* ---- shared chunky button (opt-in qua class) ---- */
+.btn-primary {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 26px;
+    background: linear-gradient(180deg, #FFD94D, #FFC93C);
+    color: var(--ink);
+    box-shadow: var(--shadow-btn);
+    transition: all 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--ink);
+    filter: brightness(1.04);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 var(--ink);
+}
+
+.btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---- shared card ---- */
+.card-glass {
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-chunky);
+    position: relative;
+}
+
+/* ---- shared input ---- */
+.form-input {
+    font-family: var(--font-body);
+    font-weight: 700;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: var(--r-sm);
+    color: var(--ink);
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    background: #FFFFFF;
+    box-shadow: 3px 3px 0 var(--ink);
+}
+
+.form-input::placeholder {
+    color: #9AA5C0;
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

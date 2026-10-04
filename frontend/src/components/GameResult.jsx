@@ -32,11 +32,11 @@ function GameResult({
             <header className="result-header">
                 <div className="trophy-icon">🏆</div>
                 <h1>Game Finished!</h1>
-                <p>Tất cả Pokémon bí mật đã bị lộ.</p>
+                <p>All secret Pokémon have been revealed.</p>
             </header>
 
             <section className="scoreboard">
-                <h2>Bảng xếp hạng</h2>
+                <h2>Leaderboard</h2>
 
                 <div className="score-list">
                     {result.players.map(
@@ -75,7 +75,7 @@ function GameResult({
             </section>
 
             <section className="revealed-pokemon">
-                <h2>Pokémon đã lộ diện</h2>
+                <h2>Revealed Pokémon</h2>
 
                 <div className="revealed-grid">
                     {result.players.map(
@@ -100,7 +100,7 @@ function GameResult({
                                 </div>
 
                                 <div className="revealed-owner">
-                                    của {player.name}
+                                    of {player.name}
                                 </div>
                             </div>
                         )
@@ -114,7 +114,7 @@ function GameResult({
                     onClick={handleRematch}
                 >
                     <i className="fas fa-redo"></i>
-                    Chơi lại
+                    Play Again
                 </button>
 
                 <button
@@ -122,7 +122,7 @@ function GameResult({
                     onClick={onLeave}
                 >
                     <i className="fas fa-sign-out-alt"></i>
-                    Rời phòng
+                    Leave Room
                 </button>
             </div>
 

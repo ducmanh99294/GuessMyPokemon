@@ -5,7 +5,7 @@ const typeCache = new Map();
 async function getType(name) {
     name = name.toLowerCase();
 
-    // Kiểm tra cache
+    // Check the cache
     if (typeCache.has(name)) {
         return typeCache.get(name);
     }
@@ -33,7 +33,7 @@ async function getType(name) {
             .map((type) => type.name)
     };
 
-    // Lưu cache
+    // Save the cache
     typeCache.set(name, result);
 
     return result;

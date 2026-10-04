@@ -21,13 +21,13 @@ function authResponse(user) {
     };
 }
 
-// Đăng ký
+// Register
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password } = req.body || {};
         const user = await userManager.createUser({ name, email, password });
 
-        // createUser trả về public shape; cần full user để ký token
+        // createUser returns the public shape; we need the full user to sign the token
         const full = await userManager.findById(user.id);
 
         res.status(201).json(authResponse(full));
@@ -36,7 +36,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// Đăng nhập
+// Login
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body || {};
@@ -46,7 +46,7 @@ router.post("/login", async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Email hoặc mật khẩu không đúng.",
+                message: "Incorrect email or password.",
             });
         }
 
@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
         if (!ok) {
             return res.status(401).json({
                 success: false,
-                message: "Email hoặc mật khẩu không đúng.",
+                message: "Incorrect email or password.",
             });
         }
 
@@ -65,7 +65,7 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// Lấy thông tin user hiện tại
+// Get the current user info
 router.get("/me", requireAuth, (req, res) => {
     res.json({ success: true, user: req.user });
 });

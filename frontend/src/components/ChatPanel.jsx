@@ -32,7 +32,7 @@ function ChatPanel({ roomId }) {
         };
     }, []);
 
-    // ⭐ auto-scroll xuống cuối khi có tin nhắn mới
+    // ⭐ auto-scroll to the bottom on new messages
     useEffect(() => {
         const container = messagesContainerRef.current;
         if (!container) return;
@@ -79,7 +79,7 @@ function ChatPanel({ roomId }) {
                 {messages.length === 0 && (
                     <div className="chat-empty">
                         <span className="chat-empty-icon">💬</span>
-                        <p>Chưa có tin nhắn nào. Bắt đầu trò chuyện!</p>
+                        <p>No messages yet. Start chatting!</p>
                     </div>
                 )}
 
@@ -116,7 +116,7 @@ function ChatPanel({ roomId }) {
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder="Type a message..."
                     maxLength={300}
                 />
 

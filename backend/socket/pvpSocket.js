@@ -1,21 +1,21 @@
 // =====================================================
-// PVP Quick Match - bắt cặp ngẫu nhiên
+// PVP Quick Match - random pairing
 //
 // Events (client -> server):
-// - "pvp_find_match"   ({ playerId, playerName }) -> vào hàng chờ.
-//   Đủ 2 người: tạo phòng mode "pvp", cho cả 2 socket vào phòng,
-//   emit "pvp_matched" { roomId, opponent } cho từng người.
-// - "pvp_cancel_match" ({ playerId })             -> rời hàng chờ.
+// - "pvp_find_match"   ({ playerId, playerName }) -> join the queue.
+//   When 2 are ready: create a "pvp" room, put both sockets in,
+//   emit "pvp_matched" { roomId, opponent } to each player.
+// - "pvp_cancel_match" ({ playerId })             -> leave the queue.
 //
-// Sau "pvp_matched", client điều hướng tới /game/:roomId.
-// Luồng chọn Pokémon / đoán / tính điểm dùng lại nguyên
-// gameManager + GameRoom như phòng thường (reconnect_room
-// tự gắn lại socket vì player đã có trong room.players).
+// After "pvp_matched", the client navigates to /game/:roomId.
+// The pick/guess/scoring flow fully reuses
+// gameManager + GameRoom like a normal room (reconnect_room
+// reattaches the socket since the player is already in room.players).
 // =====================================================
 
 const roomManager = require("../managers/roomManager");
 
-// Hàng chờ matchmaking: Map<playerId, { playerId, name, socket, joinedAt }>
+// Matchmaking queue: Map<playerId, { playerId, name, socket, joinedAt }>
 const queue = new Map();
 
 function setupPvpSocket(io) {
@@ -39,8 +39,8 @@ function setupPvpSocket(io) {
                             .trim()
                             .slice(0, 20) || "Player";
 
-                    // Đã trong hàng chờ -> cập nhật socket mới
-                    // (tránh trùng khi user bấm tìm lại / reconnect)
+                    // Already in queue -> update to the new socket
+                    // (avoid duplicates when the user re-searches / reconnects)
                     if (queue.has(playerId)) {
                         queue.get(playerId).socket = socket;
                         queue.get(playerId).name = name;
@@ -92,7 +92,7 @@ function setupPvpSocket(io) {
         );
 
         // =========================================
-        // DISCONNECT -> rời hàng chờ
+        // DISCONNECT -> leave the queue
         // =========================================
 
         socket.on("disconnect", () => {
@@ -105,7 +105,7 @@ function setupPvpSocket(io) {
     });
 }
 
-// Vị trí trong hàng chờ (1-based)
+// Position in queue (1-based)
 function positionOf(playerId) {
     let i = 1;
 
@@ -117,7 +117,7 @@ function positionOf(playerId) {
     return i;
 }
 
-// Ghép cặp FIFO khi đủ 2 người
+// Pair up FIFO when 2 are ready
 function tryMatch(io) {
     if (queue.size < 2) {
         return;
@@ -125,7 +125,7 @@ function tryMatch(io) {
 
     const [p1, p2] = [...queue.values()].slice(0, 2);
 
-    // Bỏ socket đã rớt mạng khỏi hàng chờ rồi thử lại
+    // Drop disconnected sockets from the queue, then retry
     if (!p1.socket.connected || !p2.socket.connected) {
         if (!p1.socket.connected) queue.delete(p1.playerId);
         if (!p2.socket.connected) queue.delete(p2.playerId);
@@ -137,7 +137,7 @@ function tryMatch(io) {
     queue.delete(p1.playerId);
     queue.delete(p2.playerId);
 
-    // Dùng lại roomManager: phòng pvp 2 người
+    // Reuse roomManager: 2-player pvp room
     const room = roomManager.createRoom(
         {
             id: p1.playerId,

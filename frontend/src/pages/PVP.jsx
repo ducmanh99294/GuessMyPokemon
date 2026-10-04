@@ -1,12 +1,14 @@
-// PVP.jsx - Đấu nhanh: bắt cặp ngẫu nhiên với người chơi khác.
-// Luồng: bấm "Tìm đối thủ" -> server ghép cặp -> nhận "pvp_matched"
-// -> chuyển tới /game/:roomId (dùng lại GameRoom + mọi component sẵn có).
+// PVP.jsx - Quick match: random pairing with another player.
+// Flow: click "Find Opponent" -> server pairs up -> receive "pvp_matched"
+// -> navigate to /game/:roomId (reuses GameRoom + all existing components).
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { useAuth } from "../context/AuthContext";
 import "../css/PVP.css";
+import GuestWarningModal from "../components/GuestWarningModal";
+import SoloLeaderboard from "../components/SoloLeaderboard";
 
 function formatElapsed(sec) {
     const m = Math.floor(sec / 60);
@@ -25,21 +27,23 @@ function PVP() {
     const [elapsed, setElapsed] = useState(0);
     const [matchedName, setMatchedName] = useState("");
     const [error, setError] = useState("");
+    const [showGuestWarning, setShowGuestWarning] = useState(false);
+    const guestAcked = useRef(false); // guest acknowledged this session
 
     const playerId = getPlayerId();
     const timerRef = useRef(null);
     const searchingRef = useRef(false);
 
-    // Nhận phòng sau khi server bắt cặp
+    // Receive the room after the server pairs up
     useEffect(() => {
         function onMatched({ roomId, opponent }) {
             setSearching(false);
             searchingRef.current = false;
-            setMatchedName(opponent?.name || "Đối thủ");
+            setMatchedName(opponent?.name || "Opponent");
 
             localStorage.setItem("pokemon_room_id", roomId);
 
-            // Chờ 1 nhịp để user thấy "Đã tìm thấy đối thủ"
+            // Wait a beat so the user sees "Opponent found"
             setTimeout(() => navigate(`/game/${roomId}`), 900);
         }
 
@@ -47,7 +51,7 @@ function PVP() {
         return () => socket.off("pvp_matched", onMatched);
     }, [navigate]);
 
-    // Đồng hồ đếm thời gian chờ
+    // Waiting timer
     useEffect(() => {
         if (searching) {
             setElapsed(0);
@@ -62,7 +66,7 @@ function PVP() {
         return () => clearInterval(timerRef.current);
     }, [searching]);
 
-    // Rời trang khi đang tìm -> tự hủy khỏi hàng chờ
+    // Leaving the page while searching -> auto-remove from queue
     useEffect(() => {
         return () => {
             if (searchingRef.current) {
@@ -81,6 +85,22 @@ function PVP() {
     }
 
     function handleFind() {
+        // Not logged in -> warn that scores won't be saved (once per session)
+        if (!user && !guestAcked.current) {
+            setShowGuestWarning(true);
+            return;
+        }
+
+        doFind();
+    }
+
+    function handleGuestConfirm() {
+        guestAcked.current = true;
+        setShowGuestWarning(false);
+        doFind();
+    }
+
+    function doFind() {
         setError("");
 
         const playerName = (user?.name || name).trim() || "Player";
@@ -95,7 +115,7 @@ function PVP() {
                 (res) => {
                     if (!res?.success) {
                         setError(
-                            res?.message || "Không thể tìm trận. Thử lại nhé."
+                            res?.message || "Could not find a match. Try again."
                         );
                         return;
                     }
@@ -117,10 +137,10 @@ function PVP() {
         <div className="pvp-container">
             <div className="pvp-card">
                 <div className="pvp-icon">⚔️</div>
-                <h1 className="pvp-title">Đấu nhanh PVP</h1>
+                <h1 className="pvp-title">Quick PVP Battle</h1>
                 <p className="pvp-sub">
-                    Bắt cặp ngẫu nhiên với một người chơi khác.
-                    Mỗi người chọn một Pokémon bí mật — ai đoán đúng trước thì thắng.
+                    Get randomly paired with another player.
+                    Each player picks a secret Pokémon — whoever guesses right first wins.
                 </p>
 
                 {error && <div className="pvp-error">{error}</div>}
@@ -131,7 +151,7 @@ function PVP() {
                             <input
                                 className="pvp-input"
                                 type="text"
-                                placeholder="Tên hiển thị của bạn..."
+                                placeholder="Your display name..."
                                 maxLength={20}
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -142,14 +162,14 @@ function PVP() {
                             className="pvp-btn pvp-btn-find"
                             onClick={handleFind}
                         >
-                            🔍 Tìm đối thủ
+                            🔍 Find Opponent
                         </button>
 
                         <button
                             className="pvp-btn pvp-btn-ghost"
                             onClick={() => navigate("/")}
                         >
-                            ← Về trang chủ
+                            ← Back to Home
                         </button>
                     </>
                 )}
@@ -161,26 +181,38 @@ function PVP() {
                             {formatElapsed(elapsed)}
                         </div>
                         <p className="pvp-sub">
-                            Đang tìm đối thủ xứng tầm...
+                            Finding a worthy opponent...
                         </p>
                         <button
                             className="pvp-btn pvp-btn-cancel"
                             onClick={handleCancel}
                         >
-                            Hủy tìm trận
+                            Cancel Search
                         </button>
                     </div>
                 )}
+
+                <GuestWarningModal
+                    open={showGuestWarning}
+                    mode="pvp"
+                    onConfirm={handleGuestConfirm}
+                    onGoLogin={() => navigate("/login")}
+                    onDismiss={() => setShowGuestWarning(false)}
+                />
 
                 {matchedName && (
                     <div className="pvp-matched">
                         <div className="pvp-check">✅</div>
                         <p className="pvp-sub">
-                            Đã tìm thấy <strong>{matchedName}</strong>!
-                            Đang vào trận...
+                            Found <strong>{matchedName}</strong>!
+                            Joining the battle...
                         </p>
                     </div>
                 )}
+            </div>
+
+            <div className="pvp-lb">
+                <SoloLeaderboard mode="pvp" />
             </div>
         </div>
     );

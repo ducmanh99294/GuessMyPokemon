@@ -1,804 +1,414 @@
-/* =========================================================
-   FILTER PANEL
-========================================================= */
+/* =====================================================
+   FILTER PANEL — bộ lọc suy luận (cartoon style)
+   Đồng bộ với Home: giấy #FDF3DC, mực #2B3A55
+   ===================================================== */
 
 .filter-panel {
-    width: 100%;
-    min-width: 0;
-    overflow-x: hidden;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 10px;
-
-    padding: 12px 14px;
-
-    color: #e8e8e8;
-
-    box-sizing: border-box;
+    font-family: 'Nunito', sans-serif;
+    color: #2B3A55;
+    animation: dropDown 0.25s ease;
 }
 
-.name-search-section {
-    margin-bottom: 20px;
+@keyframes dropDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.name-search-section h3 {
+.filter-panel > h2 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #22304A;
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.filter-panel section {
+    margin-bottom: 18px;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 3px 3px 0 rgba(43, 58, 85, 0.25);
+}
+
+.filter-panel section h3 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5A6B8C;
     margin-bottom: 10px;
+}
+
+.filter-panel section:nth-of-type(3) > button {
+    width: 100%;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    color: #2B3A55;
+}
+
+.filter-panel section:nth-of-type(3) > button:hover {
+    background: #FFE9A8;
+}
+
+.filter-panel section:nth-of-type(3) > button.active {
+    background: #FFC93C;
+    box-shadow: 2px 2px 0 #2B3A55;
+}
+
+.filter-panel button {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.filter-panel button:hover {
+    filter: brightness(1.04);
+}
+
+.filter-panel button.active {
+    outline: none;
+}
+
+/* ===== TYPE GRID ===== */
+.type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.type-grid button {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #FFFDF5;
+    color: #2B3A55;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 7px 6px;
+    transition: all 0.12s ease;
+}
+
+.type-grid button:hover {
+    transform: translateY(-1px);
+}
+
+.type-grid button.active {
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(43, 58, 85, 0.4);
+    box-shadow: 2px 2px 0 #2B3A55;
+}
+
+/* type colors khi active */
+.type-grid button[data-type="normal"].active { background: #A8A77A; }
+.type-grid button[data-type="fire"].active { background: #EE8130; }
+.type-grid button[data-type="water"].active { background: #6390F0; }
+.type-grid button[data-type="electric"].active { background: #E8B800; }
+.type-grid button[data-type="grass"].active { background: #6FAE4E; }
+.type-grid button[data-type="ice"].active { background: #7FC8C8; }
+.type-grid button[data-type="fighting"].active { background: #C22E28; }
+.type-grid button[data-type="poison"].active { background: #A33EA1; }
+.type-grid button[data-type="ground"].active { background: #D1A94F; }
+.type-grid button[data-type="flying"].active { background: #8E7CF0; }
+.type-grid button[data-type="ghost"].active { background: #735797; }
+.type-grid button[data-type="dragon"].active { background: #6F35FC; }
+.type-grid button[data-type="dark"].active { background: #5A4A3A; }
+.type-grid button[data-type="steel"].active { background: #9AA0B5; }
+.type-grid button[data-type="fairy"].active { background: #D685AD; }
+.type-grid button[data-type="bug"].active { background: #93A51A; }
+.type-grid button[data-type="rock"].active { background: #A1913B; }
+.type-grid button[data-type="psychic"].active { background: #F95587; }
+
+/* ===== GENERATION GRID ===== */
+.generation-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.generation-grid button {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: #FFFDF5;
+    color: #2B3A55;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 8px 6px;
+    transition: all 0.12s ease;
+}
+
+.generation-grid button:hover {
+    background: #FFF6DE;
+}
+
+.generation-grid button.active {
+    background: #7EC8E3;
+    box-shadow: 2px 2px 0 #2B3A55;
+}
+
+/* ===== NAME SEARCH ===== */
+.name-search-section h3 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    color: #5A6B8C;
+    margin-bottom: 8px;
 }
 
 .name-search-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
 }
 
 .name-search-wrapper input {
-    
     width: 100%;
-    height: 42px;
-    padding: 0 40px 0 10px;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 9px 34px 9px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #2B3A55;
+}
 
-    border: 1px solid #ccc;
-    border-radius: 8px;
-
-    font-size: 14px;
-    outline: none;
-
-    color: #666;
-    background: #2a28285d;
-    box-sizing: border-box;
+.name-search-wrapper input::placeholder {
+    color: #9AA5C0;
+    font-weight: 600;
 }
 
 .name-search-wrapper input:focus {
-    border-color: #666;
+    outline: none;
+    box-shadow: 2px 2px 0 #2B3A55;
+    background: #FFFFFF;
 }
 
 .clear-search {
     position: absolute;
     right: 8px;
-
-    width: 26px;
-    height: 26px;
-
-    border: none;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #FFE3E1;
+    border: 2px solid #E8554E;
+    color: #B33730;
     border-radius: 50%;
-
-    background: transparent;
-
-    font-size: 20px;
-    line-height: 1;
-
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+    font-weight: 800;
     cursor: pointer;
+    line-height: 1;
 }
 
 .clear-search:hover {
-    background: #eee;
+    background: #E8554E;
+    color: #fff;
 }
 
-/* =========================================================
-   TITLE
-========================================================= */
-
-.filter-panel > h2 {
-    margin: 0;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    color: #ffd700;
-
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-
-/* =========================================================
-   SECTION
-========================================================= */
-
-.filter-panel section {
-    width: 100%;
-    min-width: 0;
-
-    display: flex;
-    align-items: flex-start;
-
-    gap: 12px;
-
-    padding: 0;
-    margin: 0;
-
-    box-sizing: border-box;
-}
-
-
-/* Label */
-
-.filter-panel section h3 {
-    flex: 0 0 100px;
-
-    margin: 5px 0 0;
-
-    color: #777d8d;
-
-    font-size: 9px;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-
-/* =========================================================
-   BUTTON BASE
-========================================================= */
-
-.filter-panel button {
-    height: 26px;
-
-    padding: 0 9px;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-
-    background: rgba(255, 255, 255, 0.025);
-
-    color: #9297a6;
-
-    font-size: 10px;
-    font-weight: 600;
-
-    white-space: nowrap;
-
-    cursor: pointer;
-
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        color 0.15s ease;
-}
-
-.filter-panel button:hover {
-    background: rgba(255, 255, 255, 0.06);
-
-    border-color: rgba(255, 215, 0, 0.25);
-
-    color: #ddd;
-}
-
-.filter-panel button.active {
-    background: rgba(255, 215, 0, 0.12);
-
-    border-color: rgba(255, 215, 0, 0.5);
-
-    color: #ffd700;
-}
-
-
-/* =========================================================
-   TYPE
-========================================================= */
-
-.type-grid {
-    flex: 1;
-    min-width: 200px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(50px, 1fr));
-    gap: 5px;
-}
-
-.type-grid button {
-    width: 100%;
-
-    text-transform: capitalize;
-}
-
-
-/* =========================================================
-   TYPE BUTTON COLORS (khi active) — theo hệ Pokémon
-========================================================= */
-
-.type-grid button[data-type="normal"].active   { background: rgba(168, 168, 120, 0.15); border-color: rgba(168, 168, 120, 0.5); color: #c6c6a7; }
-.type-grid button[data-type="fire"].active     { background: rgba(240, 128, 48, 0.15);  border-color: rgba(240, 128, 48, 0.5);  color: #ff9d55; }
-.type-grid button[data-type="water"].active    { background: rgba(104, 144, 240, 0.15); border-color: rgba(104, 144, 240, 0.5); color: #6890f0; }
-.type-grid button[data-type="electric"].active { background: rgba(248, 208, 48, 0.15);  border-color: rgba(248, 208, 48, 0.5);  color: #f8d030; }
-.type-grid button[data-type="grass"].active    { background: rgba(120, 200, 80, 0.15);  border-color: rgba(120, 200, 80, 0.5);  color: #78c850; }
-.type-grid button[data-type="ice"].active      { background: rgba(152, 216, 216, 0.15); border-color: rgba(152, 216, 216, 0.5); color: #98d8d8; }
-.type-grid button[data-type="fighting"].active { background: rgba(192, 48, 40, 0.15);   border-color: rgba(192, 48, 40, 0.5);   color: #e0524a; }
-.type-grid button[data-type="poison"].active   { background: rgba(160, 64, 160, 0.15);  border-color: rgba(160, 64, 160, 0.5);  color: #c060c0; }
-.type-grid button[data-type="ground"].active   { background: rgba(224, 192, 104, 0.15); border-color: rgba(224, 192, 104, 0.5); color: #e0c068; }
-.type-grid button[data-type="flying"].active   { background: rgba(168, 144, 240, 0.15); border-color: rgba(168, 144, 240, 0.5); color: #a890f0; }
-.type-grid button[data-type="psychic"].active  { background: rgba(248, 88, 136, 0.15);  border-color: rgba(248, 88, 136, 0.5);  color: #f96b96; }
-.type-grid button[data-type="bug"].active      { background: rgba(168, 184, 32, 0.15);  border-color: rgba(168, 184, 32, 0.5);  color: #a8b820; }
-.type-grid button[data-type="rock"].active     { background: rgba(184, 160, 56, 0.15);  border-color: rgba(184, 160, 56, 0.5);  color: #b8a038; }
-.type-grid button[data-type="ghost"].active    { background: rgba(112, 88, 152, 0.15);  border-color: rgba(112, 88, 152, 0.5);  color: #9070b8; }
-.type-grid button[data-type="dragon"].active   { background: rgba(112, 56, 248, 0.15);  border-color: rgba(112, 56, 248, 0.5);  color: #8560f8; }
-.type-grid button[data-type="dark"].active     { background: rgba(112, 88, 72, 0.15);   border-color: rgba(112, 88, 72, 0.5);   color: #8a7166; }
-.type-grid button[data-type="steel"].active    { background: rgba(184, 184, 208, 0.15); border-color: rgba(184, 184, 208, 0.5); color: #c4c4d8; }
-.type-grid button[data-type="fairy"].active    { background: rgba(238, 153, 172, 0.15); border-color: rgba(238, 153, 172, 0.5); color: #ffb6c7; }
-
-
-/* =========================================================
-   GENERATION
-========================================================= */
-
-.generation-grid {
-    flex: 1;
-    min-width: 0;
-
-    display: grid;
-    grid-template-columns: repeat(3, minmax(55px, 1fr));
-
-    gap: 5px;
-}
-
-.generation-grid button {
-    min-width: 52px;
-}
-
-
-/* =========================================================
-   SPECIAL
-========================================================= */
-
-.filter-panel section:nth-of-type(3) {
-    align-items: center;
-}
-
-.filter-panel section:nth-of-type(3) > button {
-    min-width: 80px;
-}
-
-
-/* =========================================================
-   EVOLUTION
-========================================================= */
-
-.evolution-options,
-.evolution-forms {
-    display: grid;
-    gap: 5px;
-}
-
-.evolution-options {
-    flex: 0 0 auto;
-}
-
-.evolution-forms {
-    flex: 1;
-    grid-template-columns: repeat(2, minmax(55px, 1fr));
-    min-width: 0;
-    max-width: 250px;
-}
-
-
-/* =========================================================
-   TYPE EFFECTIVENESS SECTION
-========================================================= */
-
-.filter-panel .effectiveness-section {
-    width: 100%;
-
-    display: flex;
-    flex-direction: column;
-
-    align-items: stretch;
-
-    gap: 8px;
-}
-
-
-/* Title */
-
-.filter-panel .effectiveness-section h3 {
-    width: 100%;
-
-    margin: 0;
-
-    flex: none;
-
-    font-size: 9px;
-    font-weight: 700;
-
-    color: #777d8d;
-
-    text-transform: uppercase;
-}
-
-
-/* =========================================================
-   4 EFFECTIVENESS GROUPS (2x2 để mỗi nhóm rộng hơn)
-========================================================= */
-
-.effectiveness-grid-container {
-    width: 100%;
-    min-width: 0;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(1, minmax(0, 1fr));
-
-    gap: 10px;
-
-    align-items: start;
-}
-
-
-/* =========================================================
-   INDIVIDUAL EFFECTIVENESS GRID
-========================================================= */
-
-.effectiveness-grid {
-    width: 100%;
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 6px;
-
-    box-sizing: border-box;
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.effectiveness-header {
-    width: 100%;
-    min-height: 24px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 5px;
-
-    padding: 4px 6px;
-
-    box-sizing: border-box;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-
-    background: rgba(255, 255, 255, 0.025);
-
-    color: #9ca3af;
-
-    font-size: 9px;
-    font-weight: 600;
-
-    white-space: nowrap;
-
-    cursor: pointer;
-}
-
-.effectiveness-header:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.effectiveness-header.has-selection {
-    border-color: rgba(255, 215, 0, 0.35);
-    color: #ffd700;
-}
-
-
-/* =========================================================
-   SELECTED COUNT
-========================================================= */
-
-.selected-count {
-    min-width: 16px;
-    height: 16px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: rgba(255, 215, 0, 0.15);
-
-    color: #ffd700;
-
-    font-size: 8px;
-}
-
-
-/* =========================================================
-   TYPE CHECKBOX LIST — gọn hơn, có scroll, animation mở
-========================================================= */
-
+/* ===== TYPE CHECKBOX LIST ===== */
 .type-checkbox-list {
-    width: 100%;
-    min-width: 0;
-
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    gap: 3px;
-
-    padding: 6px;
-    margin-top: 2px;
-
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.015);
-
-    box-sizing: border-box;
-
-    max-height: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
     overflow-y: auto;
-
-    animation: dropDown 0.15s ease-out;
-}
-
-@keyframes dropDown {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    padding-right: 4px;
 }
 
 .type-checkbox-list::-webkit-scrollbar {
-    width: 4px;
+    width: 8px;
 }
+
 .type-checkbox-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    background: #D9CFB4;
+    border-radius: 999px;
 }
-
-
-/* =========================================================
-   TYPE CHECKBOX
-========================================================= */
 
 .type-checkbox {
-    min-width: 0;
-    width: 100%;
-    height: 20px;
-
     display: flex;
-
-    flex-direction: row !important;
-
     align-items: center;
-    justify-content: flex-start;
-
-    gap: 4px;
-
-    padding: 1px 5px;
-
-    box-sizing: border-box;
-
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-
-    background: rgba(255, 255, 255, 0.02);
-
-    color: #9ca3af;
-
-    font-size: 8.5px;
-
+    gap: 10px;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 10px;
+    padding: 8px 12px;
     cursor: pointer;
-
-    white-space: nowrap;
-
-    transition: background 0.12s ease, border-color 0.12s ease;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: all 0.12s ease;
 }
-
-
-/* =========================================================
-   CHECKBOX
-========================================================= */
-
-.type-checkbox input[type="checkbox"] {
-    width: 10px;
-    height: 10px;
-
-    margin: 0;
-
-    flex-shrink: 0;
-
-    accent-color: #ffd700;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   TYPE NAME (luôn hiện, không bị bóp mất)
-========================================================= */
-
-.type-checkbox span {
-    flex: 1 1 auto;
-    min-width: 0;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    text-transform: capitalize;
-    color: inherit;
-}
-
-
-/* =========================================================
-   HOVER
-========================================================= */
 
 .type-checkbox:hover {
-    background: rgba(255, 255, 255, 0.06);
-
-    border-color: rgba(255, 255, 255, 0.12);
+    background: #FFF6DE;
 }
-
-
-/* =========================================================
-   CHECKED (mặc định vàng, override theo hệ bên dưới)
-========================================================= */
 
 .type-checkbox:has(input:checked) {
-    background: rgba(255, 215, 0, 0.08);
-
-    border-color: rgba(255, 215, 0, 0.35);
-
-    color: #ffd700;
+    background: #FFF3D0;
+    box-shadow: 2px 2px 0 #2B3A55;
 }
 
-
-/* =========================================================
-   TYPE CHECKBOX COLORS (khi checked) — theo hệ Pokémon
-========================================================= */
-
-/* Luôn hiện màu hệ, kể cả khi chưa chọn — border nhạt hơn, nền tối hơn khi chưa active */
-.type-grid button[data-type="normal"]   { border-color: rgba(168, 168, 120, 0.25); color: #a8a878; }
-.type-grid button[data-type="fire"]     { border-color: rgba(240, 128, 48, 0.25);  color: #f08030; }
-.type-grid button[data-type="water"]    { border-color: rgba(104, 144, 240, 0.25); color: #6890f0; }
-.type-grid button[data-type="electric"] { border-color: rgba(248, 208, 48, 0.25);  color: #f8d030; }
-.type-grid button[data-type="grass"]    { border-color: rgba(120, 200, 80, 0.25);  color: #78c850; }
-.type-grid button[data-type="ice"]      { border-color: rgba(152, 216, 216, 0.25); color: #98d8d8; }
-.type-grid button[data-type="fighting"] { border-color: rgba(192, 48, 40, 0.25);   color: #c03028; }
-.type-grid button[data-type="poison"]   { border-color: rgba(160, 64, 160, 0.25);  color: #a040a0; }
-.type-grid button[data-type="ground"]   { border-color: rgba(224, 192, 104, 0.25); color: #e0c068; }
-.type-grid button[data-type="flying"]   { border-color: rgba(168, 144, 240, 0.25); color: #a890f0; }
-.type-grid button[data-type="psychic"]  { border-color: rgba(248, 88, 136, 0.25);  color: #f85888; }
-.type-grid button[data-type="bug"]      { border-color: rgba(168, 184, 32, 0.25);  color: #a8b820; }
-.type-grid button[data-type="rock"]     { border-color: rgba(184, 160, 56, 0.25);  color: #b8a038; }
-.type-grid button[data-type="ghost"]    { border-color: rgba(112, 88, 152, 0.25);  color: #705898; }
-.type-grid button[data-type="dragon"]   { border-color: rgba(112, 56, 248, 0.25);  color: #7038f8; }
-.type-grid button[data-type="dark"]     { border-color: rgba(112, 88, 72, 0.25);   color: #705848; }
-.type-grid button[data-type="steel"]    { border-color: rgba(184, 184, 208, 0.25); color: #b8b8d0; }
-.type-grid button[data-type="fairy"]    { border-color: rgba(238, 153, 172, 0.25); color: #ee99ac; }
-
-/* =========================================================
-   TYPE LIST (dạng cũ, nếu còn dùng ở đâu đó)
-========================================================= */
-
-.effectiveness-types {
-    width: 100%;
-    min-width: 0;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(6, minmax(0, 1fr));
-
-    gap: 4px;
-
-    align-items: center;
-}
-
-
-/* =========================================================
-   TYPE BUTTON / LABEL
-========================================================= */
-
-.effectiveness-types button,
-.effectiveness-types label {
-    min-width: 0;
-    width: 100%;
-
-    height: 24px;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: 2px;
-
-    padding: 2px 4px;
-
-    box-sizing: border-box;
-
-    border: 1px solid rgba(255, 255, 255, 0.07);
-
-    border-radius: 4px;
-
-    background: rgba(255, 255, 255, 0.025);
-
-    color: #8c92a0;
-
-    font-size: 8px;
-
+.type-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #E8554E;
     cursor: pointer;
 }
 
+.type-checkbox span {
+    text-transform: capitalize;
+}
+
+/* ===== EFFECTIVENESS ===== */
+.effectiveness-grid-container {
+    margin-top: 4px;
+}
+
+.effectiveness-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.88rem;
+    padding: 6px 2px;
+    border-radius: 8px;
+}
+
+.effectiveness-header:hover {
+    background: #FFF6DE;
+}
+
+.effectiveness-header.has-selection {
+    color: #B33730;
+}
+
+.effectiveness-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.effectiveness-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.effectiveness-types label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: #FFFDF5;
+    border: 2px solid #2B3A55;
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.effectiveness-types label:hover {
+    background: #FFE9A8;
+}
+
+.effectiveness-types label.active {
+    background: #FFC93C;
+    box-shadow: 2px 2px 0 #2B3A55;
+}
 
 .effectiveness-types input[type="checkbox"] {
-    width: 11px;
-    height: 11px;
-
-    margin: 0;
-
-    flex-shrink: 0;
+    accent-color: #E8554E;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
 }
 
-
-.effectiveness-types button.active,
-.effectiveness-types label.active {
-    border-color: rgba(255, 215, 0, 0.45);
-
-    background: rgba(255, 215, 0, 0.1);
-
-    color: #ffd700;
+.evolution-forms,
+.evolution-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-
-/* =========================================================
-   ACTIVE CLUES
-========================================================= */
-
+/* ===== ACTIVE FILTERS ===== */
 .filter-panel .active-filters-section {
-    align-items: flex-start;
+    background: #FFF3D0;
+    border-color: #E8930C;
 }
 
 .active-filters {
-    flex: 1;
-    min-width: 0;
-
     display: flex;
     flex-wrap: wrap;
-
-    gap: 5px;
+    gap: 8px;
+    align-items: center;
 }
 
-
-/* =========================================================
-   CLEAR
-========================================================= */
+.selected-count {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: #2B3A55;
+    color: #FFE9A8;
+    border-radius: 999px;
+    padding: 2px 12px;
+}
 
 .clear-filters-button {
-    align-self: flex-end;
-
-    height: 27px !important;
-
-    padding: 0 12px !important;
-
-    border-color: rgba(255, 80, 80, 0.25) !important;
-
-    background: rgba(255, 60, 60, 0.05) !important;
-
-    color: #d78282 !important;
-
-    font-size: 9px !important;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    background: #FFE3E1;
+    color: #B33730;
+    border: 2px solid #E8554E;
+    border-radius: 999px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.12s ease;
 }
 
 .clear-filters-button:hover {
-    border-color: rgba(255, 80, 80, 0.45) !important;
-
-    background: rgba(255, 60, 60, 0.1) !important;
-
-    color: #ff9999 !important;
+    background: #E8554E;
+    color: #fff;
 }
 
-
-/* =========================================================
-   MOBILE RESPONSIVE
-========================================================= */
-@media (max-width: 1080px) {
-    .filter-panel section {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-    }
-
-    .filter-panel section h3 {
-        flex: none;
-    }
-
-    .type-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .generation-grid {
-        grid-template-columns: repeat(10, minmax(0, 1fr));
-    }
-
-    .evolution-forms{
-        grid-template-columns: repeat(9, minmax(65px, 1fr));
-    }
-
-    .effectiveness-grid-container {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .type-checkbox-list {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .filter-panel button {
-        height: 30px;
-        font-size: 11px;
-    }
+.Special-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
 }
 
 @media (max-width: 768px) {
-    .filter-panel section {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-    }
-
-    .filter-panel section h3 {
-        flex: none;
-    }
-
     .type-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .generation-grid {
-        grid-template-columns: repeat(10, minmax(0, 1fr));
-    }
-
-    .evolution-forms{
-        grid-template-columns: repeat(9, minmax(65px, 1fr));
-    }
-
-    .effectiveness-grid-container {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .type-checkbox-list {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .filter-panel button {
-        height: 30px;
-        font-size: 11px;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 400px) {
-
-    .generation-grid {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-
     .type-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, 1fr);
     }
+}
 
-    .Special-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-     .evolution-forms{
-        grid-template-columns: repeat(5, minmax(56px, 1fr));
-     }
-
-    .type-checkbox-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 1080px) {
+    .filter-panel section {
+        padding: 12px;
     }
 }

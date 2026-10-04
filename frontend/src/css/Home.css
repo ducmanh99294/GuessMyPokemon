@@ -161,7 +161,7 @@
 }
 
 /* ===== TOP BAR — full width, đặc ở đầu trang, trong suốt khi scroll ===== */
-.top-bar {
+.home-container .top-bar {
     position: fixed;
     top: 0;
     left: 0;
@@ -174,24 +174,24 @@
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    background: #FFFDF8;
+    background: #fffdf81e;
     border: none;
-    border-bottom: 3px solid #2B3A55;
+    border-bottom: 3px solid #2b3a5500;
     border-radius: 0;
     padding: 12px 24px;
-    box-shadow: 0 4px 0 rgba(43, 58, 85, 0.12);
+    box-shadow: 0 4px 0 rgba(43, 58, 85, 0);
     transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Fallback khi không có GSAP: toggle class */
-.top-bar.scrolled {
+.home-container .top-bar.scrolled {
     background: transparent;
     border-bottom-color: transparent;
     box-shadow: none;
 }
 
 /* Khi GSAP điều khiển: tắt transition CSS để khỏi giật */
-.top-bar.gsap-on { transition: none; }
+.home-container .top-bar.gsap-on { transition: none; }
 
 .top-brand {
     display: flex;

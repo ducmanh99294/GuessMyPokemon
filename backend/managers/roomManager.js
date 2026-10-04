@@ -26,7 +26,7 @@ class RoomManager {
 
         room.chat.push(message);
 
-        // Giới hạn chat để RAM không tăng vô hạn
+        // Cap chat history so RAM doesn't grow forever
         if (room.chat.length > 200) {
             room.chat.shift();
         }
@@ -148,7 +148,7 @@ class RoomManager {
             return room;
         }
 
-        // Player mới
+        // New player
         if (room.status !== "waiting") {
             throw new Error("Game already started");
         }
@@ -180,8 +180,8 @@ class RoomManager {
             return null;
         }
 
-        // Nếu host rời phòng,
-        // player đầu tiên còn lại trở thành host
+        // If the host leaves the room,
+        // the first remaining player becomes the host
         if (room.hostId === playerId) {
             room.hostId = room.players[0].id;
         }

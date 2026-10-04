@@ -1,9 +1,9 @@
 // =====================================================
 // JWT helpers + auth middleware
 //
-// - Token ký bằng JWT_SECRET (env), hết hạn sau 7 ngày.
-// - Client gửi: Authorization: Bearer <token>
-// - Middleware gắn req.user (public shape, không có passwordHash).
+// - Tokens are signed with JWT_SECRET (env), expiring after 7 days.
+// - The client sends: Authorization: Bearer <token>
+// - The middleware attaches req.user (public shape, no passwordHash).
 // =====================================================
 
 const jwt = require("jsonwebtoken");
@@ -14,8 +14,8 @@ const JWT_EXPIRES_IN = "7d";
 
 if (!process.env.JWT_SECRET) {
     console.warn(
-        "[auth] JWT_SECRET chưa được set — đang dùng secret mặc định, " +
-            "chỉ phù hợp cho môi trường dev."
+        "[auth] JWT_SECRET is not set — using the default secret, " +
+            "only suitable for dev environments."
     );
 }
 
@@ -31,7 +31,7 @@ function verifyToken(token) {
     return jwt.verify(token, JWT_SECRET);
 }
 
-// Middleware: bắt buộc đăng nhập
+// Middleware: login required
 async function requireAuth(req, res, next) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -39,7 +39,7 @@ async function requireAuth(req, res, next) {
     if (!token) {
         return res.status(401).json({
             success: false,
-            message: "Bạn cần đăng nhập.",
+            message: "You need to log in.",
         });
     }
 
@@ -49,7 +49,7 @@ async function requireAuth(req, res, next) {
     } catch (error) {
         return res.status(401).json({
             success: false,
-            message: "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.",
+            message: "Session expired, please log in again.",
         });
     }
 
@@ -59,7 +59,7 @@ async function requireAuth(req, res, next) {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Tài khoản không tồn tại.",
+                message: "Account does not exist.",
             });
         }
 
@@ -68,14 +68,14 @@ async function requireAuth(req, res, next) {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: "Lỗi server, vui lòng thử lại.",
+            message: "Server error, please try again.",
         });
     }
 }
 
-// Middleware: optional — gắn req.user nếu có token hợp lệ,
-// không báo lỗi nếu không có (dùng cho route public muốn
-// personal hoá khi user đã login).
+// Middleware: optional — attaches req.user when the token is valid,
+// no error when missing (for public routes that want
+// personalization when the user is logged in).
 async function optionalAuth(req, _res, next) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -86,7 +86,7 @@ async function optionalAuth(req, _res, next) {
             const user = await userManager.findById(payload.sub);
             if (user) req.user = userManager.toPublicUser(user);
         } catch {
-            // bỏ qua token hỏng ở route optional
+            // ignore bad tokens on optional routes
         }
     }
 

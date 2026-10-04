@@ -18,7 +18,7 @@ const setupPvpSocket = require("./socket/pvpSocket");
 
 const pokemonRoutes = require("./routes/pokemonRoutes");
 const pokemonService = require("./services/pokemonService");
-const soloLeaderboardRoutes = require("./routes/soloLeaderboardRoutes");
+const { createLeaderboardRouter } = require("./routes/leaderboardRoutes");
 const { connectMongo } = require("./db/mongo");
 
 const app = express();
@@ -79,7 +79,8 @@ app.get("/api/health", (req, res) => {
 // ================================
 
 app.use("/api/pokemon", pokemonRoutes);
-app.use("/api/solo/leaderboard", soloLeaderboardRoutes);
+app.use("/api/daily/leaderboard", createLeaderboardRouter("daily"));
+app.use("/api/pvp/leaderboard", createLeaderboardRouter("pvp"));
 
 // ================================
 // START SERVER
@@ -114,16 +115,16 @@ function startServer() {
         });
 }
 
-// Kết nối MongoDB trước khi mở port.
-// Không có MONGODB_URI hoặc kết nối thất bại -> chạy ở chế độ
-// fallback (PokeAPI + file JSON local), server vẫn lên bình thường.
+// Connect to MongoDB before opening the port.
+// No MONGODB_URI or connection failed -> run in
+// fallback mode (PokeAPI + local JSON files), the server still starts normally.
 (async () => {
 
     try {
         await connectMongo();
     } catch (error) {
         console.error(
-            "[mongo] Không kết nối được MongoDB, chạy ở chế độ fallback:",
+            "[mongo] Could not connect to MongoDB, running in fallback mode:",
             error.message
         );
     }

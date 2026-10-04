@@ -10,6 +10,9 @@ const pokemonMetadataCache =
 const typeEffectivenessCache =
     require("../cache/typeEffectivenessCache");
 
+const mongo =
+    require("../db/mongo");
+
 
 // =====================================================
 // GET FULL POKEMON
@@ -525,6 +528,10 @@ async function getPokemonMetadata(
 
 // =====================================================
 // PRELOAD POKEMON METADATA
+//
+// Thứ tự ưu tiên:
+//   1. MongoDB (nhanh, không phụ thuộc PokeAPI)
+//   2. PokeAPI (chậm) -> tự lưu vào MongoDB để lần sau nhanh
 // =====================================================
 
 async function preloadPokemonMetadata() {
@@ -541,6 +548,100 @@ async function preloadPokemonMetadata() {
         "================================="
     );
 
+
+    // =========================
+    // 1. THỬ ĐỌC TỪ MONGODB
+    // =========================
+
+    if (mongo.isMongoReady()) {
+
+        try {
+
+            const docs =
+                await mongo
+                    .getDb()
+                    .collection("pokemons")
+                    .find({})
+                    .sort({ id: 1 })
+                    .toArray();
+
+            if (docs.length > 0) {
+
+                for (const doc of docs) {
+
+                    const { _id, ...metadata } = doc;
+
+                    pokemonMetadataCache.set(
+                        metadata.name,
+                        metadata
+                    );
+                }
+
+                console.log(
+                    `Loaded ${docs.length} Pokemon metadata from MongoDB`
+                );
+
+                return;
+            }
+
+            console.log(
+                "MongoDB 'pokemons' collection is empty — will fetch from PokeAPI and seed it."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load Pokemon metadata from MongoDB, falling back to PokeAPI:",
+                error.message
+            );
+        }
+    }
+
+
+    // =========================
+    // 2. FALLBACK: POKEAPI
+    // =========================
+
+    await preloadFromPokeApi();
+
+
+    // =========================
+    // 3. LƯU VÀO MONGODB
+    // =========================
+
+    if (mongo.isMongoReady()) {
+
+        await persistMetadataToMongo();
+    }
+
+
+    console.log(
+        "================================="
+    );
+
+    console.log(
+        "Metadata preload complete"
+    );
+
+    console.log(
+
+        `Cache size: ${
+            pokemonMetadataCache.size()
+        }`
+
+    );
+
+    console.log(
+        "================================="
+    );
+}
+
+
+// =====================================================
+// PRELOAD FROM POKEAPI (luồng cũ, giữ nguyên logic)
+// =====================================================
+
+async function preloadFromPokeApi() {
 
     const pokemonIndex =
         await require(
@@ -611,27 +712,51 @@ async function preloadPokemonMetadata() {
 
         );
     }
+}
 
 
-    console.log(
-        "================================="
-    );
+// =====================================================
+// PERSIST METADATA TO MONGODB (upsert theo id)
+// =====================================================
 
-    console.log(
-        "Metadata preload complete"
-    );
+async function persistMetadataToMongo() {
 
-    console.log(
+    const entries =
+        pokemonMetadataCache.getAll();
 
-        `Cache size: ${
-            pokemonMetadataCache.size()
-        }`
+    if (entries.length === 0) {
+        return;
+    }
 
-    );
+    try {
 
-    console.log(
-        "================================="
-    );
+        const operations =
+            entries.map((metadata) => ({
+                updateOne: {
+                    filter: { id: metadata.id },
+                    update: { $set: metadata },
+                    upsert: true
+                }
+            }));
+
+        const result =
+            await mongo
+                .getDb()
+                .collection("pokemons")
+                .bulkWrite(operations, { ordered: false });
+
+        console.log(
+            `Persisted ${entries.length} Pokemon metadata to MongoDB ` +
+            `(upserted: ${result.upsertedCount}, modified: ${result.modifiedCount})`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Failed to persist Pokemon metadata to MongoDB:",
+            error.message
+        );
+    }
 }
 
 

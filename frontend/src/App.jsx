@@ -6,6 +6,8 @@ import Lobby from "./pages/Lobby";
 import GameRoom from "./pages/GameRoom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Solo from "./pages/Solo";
+import PVP from "./pages/PVP";
 
 // @ts-expect-error The socket module is currently implemented in JavaScript.
 import socket from "./socket/socket";
@@ -46,6 +48,10 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/solo" element={<Solo />} />
+
+                {/* Đấu nhanh PVP - bắt cặp ngẫu nhiên */}
+                <Route path="/pvp" element={<PVP />} />
+
                 {/* Không tìm thấy trang */}
                 <Route
                     path="*"

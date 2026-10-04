@@ -152,7 +152,7 @@ body {
 }
 
 /* ===== TOP BAR ===== */
-.top-bar {
+.game-container .top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;

@@ -1,0 +1,15 @@
+[
+  {
+    "id": "56b60f14-bd0b-4ad7-a8b3-106fb365518c",
+    "playerId": "6abeaf0dc7f92b550c9f303a",
+    "playerName": "j",
+    "score": 0,
+    "questionsUsed": 5,
+    "wrongGuesses": 0,
+    "won": false,
+    "secretName": "graveler",
+    "secretId": 75,
+    "durationSeconds": 20,
+    "createdAt": "2026-10-03T17:12:41.784Z"
+  }
+]

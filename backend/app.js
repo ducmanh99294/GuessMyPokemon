@@ -14,10 +14,12 @@ const { Server } = require("socket.io");
 const setupGameSocket = require("./socket/gameSocket");
 const setupChatSocket = require("./socket/chatSocket");
 const setupSoloSocket = require("./socket/soloSocket");
+const setupPvpSocket = require("./socket/pvpSocket");
 
 const pokemonRoutes = require("./routes/pokemonRoutes");
 const pokemonService = require("./services/pokemonService");
 const soloLeaderboardRoutes = require("./routes/soloLeaderboardRoutes");
+const { connectMongo } = require("./db/mongo");
 
 const app = express();
 const server = http.createServer(app);
@@ -39,6 +41,7 @@ const io = new Server(server, {
 setupGameSocket(io);
 setupChatSocket(io);
 setupSoloSocket(io);
+setupPvpSocket(io);
 
 // ================================
 // MIDDLEWARE
@@ -111,4 +114,20 @@ function startServer() {
         });
 }
 
-startServer();
+// Kết nối MongoDB trước khi mở port.
+// Không có MONGODB_URI hoặc kết nối thất bại -> chạy ở chế độ
+// fallback (PokeAPI + file JSON local), server vẫn lên bình thường.
+(async () => {
+
+    try {
+        await connectMongo();
+    } catch (error) {
+        console.error(
+            "[mongo] Không kết nối được MongoDB, chạy ở chế độ fallback:",
+            error.message
+        );
+    }
+
+    startServer();
+
+})();

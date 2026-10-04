@@ -1,19 +1,3 @@
-// =====================================================
-// MongoDB connection (native driver, không dùng ODM)
-//
-// Cách dùng trong app.js (trước app.listen):
-//   const { connectMongo } = require("./db/mongo");
-//   await connectMongo(); // không throw nếu chưa có MONGODB_URI
-//
-// - Nếu có MONGODB_URI: kết nối, tạo index, các manager
-//   (userManager, soloLeaderboard) sẽ dùng MongoDB.
-// - Nếu không có: in log và các manager tự fallback về
-//   file JSON local (chạy dev không cần cài gì thêm).
-//
-// Tên database lấy từ chính URI
-// (vd: ...mongodb.net/ten_db?... -> dùng "ten_db").
-// =====================================================
-
 const { MongoClient } = require("mongodb");
 
 let client = null;
@@ -46,6 +30,15 @@ async function connectMongo() {
     await db
         .collection("leaderboard")
         .createIndex({ playerId: 1, score: -1 });
+
+    // Index: pokemons — id unique + các trường hay dùng để lọc.
+    // Thêm field mới cần lọc sau này -> thêm createIndex tương ứng ở đây.
+    await db
+        .collection("pokemons")
+        .createIndex({ id: 1 }, { unique: true });
+    await db.collection("pokemons").createIndex({ name: 1 });
+    await db.collection("pokemons").createIndex({ types: 1 });
+    await db.collection("pokemons").createIndex({ generation: 1 });
 
     ready = true;
     console.log("[mongo] Đã kết nối MongoDB.");

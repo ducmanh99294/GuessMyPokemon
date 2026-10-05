@@ -206,6 +206,34 @@ function setupSoloSocket(io) {
         );
 
         // =========================================
+        // FILTER CANDIDATES (FilterPanel)
+        // Manual filters combine with the deductions
+        // from answered questions.
+        // =========================================
+        socket.on("solo_filter", async ({ playerId, filters }, callback) => {
+            try {
+                if (!playerId) {
+                    throw new Error("Player ID is required");
+                }
+
+                const state = await soloManager.applySoloFilter(
+                    playerId,
+                    filters || {}
+                );
+
+                callback?.({
+                    success: true,
+                    state,
+                });
+            } catch (error) {
+                callback?.({
+                    success: false,
+                    message: error.message,
+                });
+            }
+        });
+
+        // =========================================
         // GUESS POKEMON
         // =========================================
         socket.on("solo_guess", async ({ playerId, pokemonId }, callback) => {

@@ -9,6 +9,8 @@ import { useAuth } from "../context/AuthContext";
 import { useEntrance } from "../hooks/useEntrance";
 import SoloLeaderboard from "../components/SoloLeaderboard";
 import GuestWarningModal from "../components/GuestWarningModal";
+import FilterPanel from "../components/FilterPanel";
+import PokemonList from "../components/PokemonList";
 import "../css/Solo.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -24,7 +26,7 @@ function Solo() {
     const [questions, setQuestions] = useState([]); // { key, label, needsValue }
     const [genValue, setGenValue] = useState("1");
     const [freeQuestion, setFreeQuestion] = useState("");
-    const [guessInput, setGuessInput] = useState("");
+    const [searchInput, setSearchInput] = useState(""); // search within candidates
     const [playerName, setPlayerName] = useState(
         () => localStorage.getItem("pokemon_solo_name") || ""
     );
@@ -144,7 +146,7 @@ function Solo() {
         setError("");
         setAlreadyPlayed(false);
         setLastGuess(null);
-        setGuessInput("");
+        setSearchInput("");
         setLoading(true);
 
         const name = (user?.name || playerName).trim();
@@ -239,40 +241,89 @@ function Solo() {
         setError("");
     }
 
-    function handleGuess(e) {
-        if (e) e.preventDefault();
+    // Click a candidate card -> guess it directly
+    function handleGuessById(pokemon) {
         if (!game || game.status !== "playing" || loading) return;
-
-        const value = guessInput.trim();
-
-        if (!value) {
-            setError("Please enter a Pokémon name or ID.");
-            return;
-        }
+        if (!pokemon) return;
 
         setError("");
         setLoading(true);
 
-        socket.emit("solo_guess", { playerId, pokemonId: value }, (res) => {
-            setLoading(false);
+        socket.emit(
+            "solo_guess",
+            { playerId, pokemonId: pokemon.id },
+            (res) => {
+                setLoading(false);
 
-            if (!res?.success) {
-                setError(res?.message || "Could not guess.");
-                return;
+                if (!res?.success) {
+                    setError(res?.message || "Could not guess.");
+                    return;
+                }
+
+                setGame(res.state);
+
+                if (res.correct) {
+                    setLastGuess({ correct: true, score: res.score });
+                } else {
+                    setLastGuess({
+                        correct: false,
+                        wrongGuesses: res.wrongGuesses,
+                    });
+                }
             }
+        );
+    }
 
-            setGame(res.state);
-            setGuessInput("");
+    // Manual filter change (FilterPanel) -> the server recomputes
+    // candidates = manual filters + deductions from answered questions
+    function handleUpdateFilter(key, value) {
+        if (!game || game.status !== "playing") return;
 
-            if (res.correct) {
-                setLastGuess({ correct: true, score: res.score });
-            } else {
-                setLastGuess({
-                    correct: false,
-                    wrongGuesses: res.wrongGuesses,
-                });
+        const updatedFilters = {
+            ...(game.filters || {}),
+            [key]: value,
+        };
+
+        // Optimistic UI: update the panel immediately
+        setGame((prev) =>
+            prev ? { ...prev, filters: updatedFilters } : prev
+        );
+
+        socket.emit(
+            "solo_filter",
+            { playerId, filters: updatedFilters },
+            (res) => {
+                if (res?.success && res.state) {
+                    setGame(res.state);
+                } else {
+                    setError(res?.message || "Could not apply filter.");
+                }
             }
-        });
+        );
+    }
+
+    function handleRemoveFilter(key) {
+        if (!game || game.status !== "playing") return;
+
+        const current = game.filters || {};
+        const updatedFilters = {
+            ...current,
+            [key]: Array.isArray(current[key]) ? [] : null,
+        };
+
+        setGame((prev) =>
+            prev ? { ...prev, filters: updatedFilters } : prev
+        );
+
+        socket.emit(
+            "solo_filter",
+            { playerId, filters: updatedFilters },
+            (res) => {
+                if (res?.success && res.state) {
+                    setGame(res.state);
+                }
+            }
+        );
     }
 
     function handleGiveUp() {
@@ -521,6 +572,15 @@ function Solo() {
         (game.questionsCount / game.maxQuestions) * 100
     );
 
+    // Client-side search within the candidate list
+    const candidates = game.candidates || [];
+    const searchTerm = searchInput.trim().toLowerCase();
+    const visibleCandidates = searchTerm
+        ? candidates.filter((p) =>
+              p.name.toLowerCase().includes(searchTerm)
+          )
+        : candidates;
+
     return (
         <>
             <div className="bg-layer" aria-hidden="true">
@@ -564,165 +624,190 @@ function Solo() {
                     </p>
                 )}
 
-                <div className="solo-grid" data-entrance>
-                    {/* Question column */}
-                    <section className="solo-card">
-                        <h2>Ask a Question</h2>
-                        <p className="card-hint">
-Type your own Yes/No question
-                        </p>
+                <div className="solo-game-grid" data-entrance>
+                    {/* LEFT: ask questions + history */}
+                    <div className="solo-left">
+                        {/* Question column */}
+                        <section className="solo-card">
+                            <h2>Ask a Question</h2>
+                            <p className="card-hint">
+                                Type your own Yes/No question — every answer
+                                narrows the candidate list automatically.
+                            </p>
 
-                        <form
-                            className="free-ask-row"
-                            onSubmit={handleAskFreeText}
-                        >
-                            <input
-                                className="form-input free-ask-input"
-                                type="text"
-                                placeholder="e.g. Is it a fire type?"
-                                maxLength={120}
-                                value={freeQuestion}
-                                onChange={(e) =>
-                                    setFreeQuestion(e.target.value)
-                                }
-                                disabled={loading}
-                            />
-                            <button
-                                type="submit"
-                                className="btn-secondary"
-                                disabled={loading || !freeQuestion.trim()}
+                            <form
+                                className="free-ask-row"
+                                onSubmit={handleAskFreeText}
                             >
-                                Ask
-                            </button>
-                        </form>
-
-                        <p className="card-hint suggestion-title">
-                            💡 Suggestions — click to fill the question box:
-                        </p>
-
-                        <div className="question-list">
-                            {questions
-                                .filter((q) => !q.needsValue)
-                                .map((q) => {
-                                    const asked = game.history.some(
-                                        (h) => h.key === q.key
-                                    );
-                                    return (
-                                        <button
-                                            key={q.key}
-                                            className={
-                                                "question-btn" +
-                                                (asked ? " asked" : "")
-                                            }
-                                            onClick={() =>
-                                                fillSuggestion(q.label)
-                                            }
-                                            disabled={loading}
-                                            title="Click to fill the question box"
-                                        >
-                                            {q.label}
-                                        </button>
-                                    );
-                                })}
-                        </div>
-
-                        <div className="gen-ask">
-                            <label htmlFor="genSelect">Ask by generation:</label>
-                            <div className="gen-ask-row">
-                                <select
-                                    id="genSelect"
-                                    value={genValue}
+                                <input
+                                    className="form-input free-ask-input"
+                                    type="text"
+                                    placeholder="e.g. Is it a fire type?"
+                                    maxLength={120}
+                                    value={freeQuestion}
                                     onChange={(e) =>
-                                        setGenValue(e.target.value)
-                                    }
-                                >
-                                    {GENERATIONS.map((g) => (
-                                        <option key={g} value={String(g)}>
-                                            Generation {g}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    className="btn-secondary"
-                                    onClick={() =>
-                                        fillSuggestion(
-                                            `Is this Pokémon from generation ${genValue}?`
-                                        )
+                                        setFreeQuestion(e.target.value)
                                     }
                                     disabled={loading}
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn-secondary"
+                                    disabled={loading || !freeQuestion.trim()}
                                 >
-                                    Fill suggestion
+                                    Ask
                                 </button>
-                            </div>
-                        </div>
-                    </section>
+                            </form>
 
-                    {/* Guess + history column */}
-                    <section className="solo-card">
-                        <h2>Guess Pokémon</h2>
-                        <form
-                            className="guess-form"
-                            onSubmit={handleGuess}
-                            autoComplete="off"
-                        >
+                            <p className="card-hint suggestion-title">
+                                💡 Suggestions — click to fill the question box:
+                            </p>
+
+                            <div className="question-list">
+                                {questions
+                                    .filter((q) => !q.needsValue)
+                                    .map((q) => {
+                                        const asked = game.history.some(
+                                            (h) => h.key === q.key
+                                        );
+                                        return (
+                                            <button
+                                                key={q.key}
+                                                className={
+                                                    "question-btn" +
+                                                    (asked ? " asked" : "")
+                                                }
+                                                onClick={() =>
+                                                    fillSuggestion(q.label)
+                                                }
+                                                disabled={loading}
+                                                title="Click to fill the question box"
+                                            >
+                                                {q.label}
+                                            </button>
+                                        );
+                                    })}
+                            </div>
+
+                            <div className="gen-ask">
+                                <label htmlFor="genSelect">Ask by generation:</label>
+                                <div className="gen-ask-row">
+                                    <select
+                                        id="genSelect"
+                                        value={genValue}
+                                        onChange={(e) =>
+                                            setGenValue(e.target.value)
+                                        }
+                                    >
+                                        {GENERATIONS.map((g) => (
+                                            <option key={g} value={String(g)}>
+                                                Generation {g}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={() =>
+                                            fillSuggestion(
+                                                `Is this Pokémon from generation ${genValue}?`
+                                            )
+                                        }
+                                        disabled={loading}
+                                    >
+                                        Fill suggestion
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* History column */}
+                        <section className="solo-card">
+                            <h2 className="history-title">Q&A History</h2>
+                            {game.history.length === 0 ? (
+                                <p className="card-hint">
+                                    No questions yet. Start deducing!
+                                </p>
+                            ) : (
+                                <ul className="history-list">
+                                    {game.history.map((h, i) => (
+                                        <li key={i} className="history-item">
+                                            <span className="history-q">
+                                                {i + 1}.{" "}
+                                                {h.questionText || h.label}
+                                                {h.questionText &&
+                                                    h.questionText !== h.label && (
+                                                        <span className="history-interpreted">
+                                                            {" "}
+                                                            → understood as: {h.label}
+                                                        </span>
+                                                    )}
+                                            </span>
+                                            <span
+                                                className={
+                                                    "history-a " +
+                                                    (h.answer ? "yes" : "no")
+                                                }
+                                            >
+                                                {h.answer ? "Yes" : "No"}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            <button
+                                className="btn-giveup"
+                                onClick={handleGiveUp}
+                            >
+                                Give up, see answer
+                            </button>
+                        </section>
+                    </div>
+
+                    {/* RIGHT: candidate list + filters */}
+                    <div className="solo-right">
+                        <section className="solo-card candidates-card">
+                            <div className="candidates-header">
+                                <h2>
+                                    Candidates{" "}
+                                    <span className="candidates-count">
+                                        {visibleCandidates.length}
+                                    </span>
+                                </h2>
+                                <p className="card-hint">
+                                    Every answer narrows this list. Click a
+                                    card to guess it!
+                                </p>
+                            </div>
+
                             <input
-                                className="form-input"
+                                className="form-input candidate-search"
                                 type="text"
-                                placeholder="Enter name or ID, e.g. pikachu / 25"
-                                value={guessInput}
+                                placeholder="Search by name..."
+                                value={searchInput}
                                 onChange={(e) =>
-                                    setGuessInput(e.target.value)
+                                    setSearchInput(e.target.value)
                                 }
                             />
-                            <button
-                                type="submit"
-                                className="btn-primary"
+
+                            <FilterPanel
+                                filters={game.filters || {}}
+                                updateFilter={handleUpdateFilter}
+                                removeFilter={handleRemoveFilter}
+                            />
+
+                            <PokemonList
+                                pokemon={visibleCandidates}
+                                loading={false}
+                                onGuess={handleGuessById}
+                                guessing={loading}
                                 disabled={loading}
-                            >
-                                Guess
-                            </button>
-                        </form>
-
-                        <h2 className="history-title">Q&A History</h2>
-                        {game.history.length === 0 ? (
-                            <p className="card-hint">
-                                No questions yet. Start deducing!
-                            </p>
-                        ) : (
-                            <ul className="history-list">
-                                {game.history.map((h, i) => (
-                                    <li key={i} className="history-item">
-                                        <span className="history-q">
-                                            {i + 1}.{" "}
-                                            {h.questionText || h.label}
-                                            {h.questionText &&
-                                                h.questionText !== h.label && (
-                                                    <span className="history-interpreted">
-                                                        {" "}
-                                                        → understood as: {h.label}
-                                                    </span>
-                                                )}
-                                        </span>
-                                        <span
-                                            className={
-                                                "history-a " +
-                                                (h.answer ? "yes" : "no")
-                                            }
-                                        >
-                                            {h.answer ? "Yes" : "No"}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        <button
-                            className="btn-giveup"
-                            onClick={handleGiveUp}
-                        >
-                            Give up, see answer
-                        </button>
-                    </section>
+                                wrongGuesses={
+                                    new Set(game.wrongGuessIds || [])
+                                }
+                            />
+                        </section>
+                    </div>
                 </div>
             </div>
         </>

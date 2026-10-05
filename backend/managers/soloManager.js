@@ -16,6 +16,7 @@
 // =====================================================
 
 const pokemonMetadataCache = require("../cache/pokemonMetadataCache");
+const pokemonFilterService = require("../services/pokemonFilterService");
 const leaderboard = require("./leaderboard");
 const dailyPlays = require("./dailyPlays");
 
@@ -24,6 +25,24 @@ const BASE_SCORE = 1000;
 const QUESTION_PENALTY = 45;
 const WRONG_GUESS_PENALTY = 20;
 const MIN_SCORE = 100;
+
+// Filter shape shared with the PvP FilterPanel so the same component
+// can be reused on the Daily Challenge page.
+const DEFAULT_SOLO_FILTERS = {
+    type: [],
+    generation: [],
+    legendary: null,
+    mythical: null,
+    hasEvolution: null,
+    mega: null,
+    evolutionForms: null,
+    effective: [],
+    noEffect: [],
+    notEffect: [],
+    superEffect: [],
+};
+
+const VALID_SOLO_FILTER_KEYS = Object.keys(DEFAULT_SOLO_FILTERS);
 
 // In-memory store: playerId -> game
 // Each playerId has at most 1 active solo game at a time.
@@ -239,23 +258,6 @@ function interpretQuestion(questionText) {
     return { key: best.def.key, value };
 }
 
-function pickRandomSecret() {
-    const all = pokemonMetadataCache.getAll();
-
-    // Exclude Mega forms from the pool: names like "charizard-mega-x"
-    // are very hard to guess by name; keeps the game fair.
-    const pool = all.filter((p) => !p.mega);
-    const source = pool.length > 0 ? pool : all;
-
-    if (source.length === 0) {
-        throw new Error(
-            "Pokémon data is not ready yet, please try again later."
-        );
-    }
-
-    return source[Math.floor(Math.random() * source.length)];
-}
-
 // Calendar-day key, e.g. "2026-10-4" (server local time).
 // Used to bucket leaderboard entries per day.
 function dailyKey(date = new Date()) {
@@ -307,6 +309,93 @@ function findSecret(game) {
         hasEvolution: false,
         sprite: null,
     };
+}
+
+// -----------------------------------------------------
+// AUTO-NARROW CANDIDATES FROM Q&A ANSWERS
+//
+// Every Yes/No answer is also a deduction: the candidate list
+// shrinks automatically so the player sees the remaining
+// possibilities narrow down in real time.
+// -----------------------------------------------------
+function deductionMatches(pokemon, h) {
+    const key = h.key || "";
+
+    // Type questions: "type_fire", "type_water", ...
+    if (key.startsWith("type_")) {
+        const t = key.slice(5);
+        const has = (pokemon.types || []).includes(t);
+        return h.answer ? has : !has;
+    }
+
+    switch (key) {
+        case "dual_type": {
+            const dual = (pokemon.types || []).length > 1;
+            return h.answer ? dual : !dual;
+        }
+        case "generation": {
+            const g = Number(h.questionValue);
+            return h.answer
+                ? pokemon.generation === g
+                : pokemon.generation !== g;
+        }
+        case "legendary":
+            return h.answer
+                ? pokemon.legendary === true
+                : pokemon.legendary !== true;
+        case "mythical":
+            return h.answer
+                ? pokemon.mythical === true
+                : pokemon.mythical !== true;
+        case "baby":
+            return h.answer
+                ? pokemon.baby === true
+                : pokemon.baby !== true;
+        case "mega":
+            return h.answer
+                ? pokemon.mega === true
+                : pokemon.mega !== true;
+        case "hasEvolution":
+            return h.answer
+                ? pokemon.hasEvolution === true
+                : pokemon.hasEvolution !== true;
+        default:
+            return true;
+    }
+}
+
+// Recompute candidates = manual filters (FilterPanel) + deductions
+// from every answered question.
+async function recomputeCandidates(game) {
+    const base = await pokemonFilterService.filterPokemon(
+        game.filters || {}
+    );
+    const history = game.questionsAsked || [];
+    game.candidates = base.filter((p) =>
+        history.every((h) => deductionMatches(p, h))
+    );
+}
+
+// Manual filter change from the client (FilterPanel).
+async function applySoloFilter(playerId, filters) {
+    const game = getGameOrThrow(playerId);
+
+    if (!filters || typeof filters !== "object") {
+        throw new Error("Invalid filters");
+    }
+
+    const updated = { ...game.filters };
+
+    for (const key of VALID_SOLO_FILTER_KEYS) {
+        if (key in filters) {
+            updated[key] = filters[key];
+        }
+    }
+
+    game.filters = updated;
+    await recomputeCandidates(game);
+
+    return getPublicState(playerId);
 }
 
 function getGameOrThrow(playerId) {
@@ -427,6 +516,9 @@ function startSoloGame(playerId, playerName, auth) {
         questionsCount: 0,
         maxQuestions: MAX_QUESTIONS,
         wrongGuesses: 0,
+        wrongGuessIds: [], // ids of Pokémon guessed wrong (greyed out in the list)
+        filters: { ...DEFAULT_SOLO_FILTERS },
+        candidates: [...pokemonMetadataCache.getAll()], // full list until narrowed
         status: "playing", // playing | won | lost | gaveup
         startTime: Date.now(),
         endTime: null,
@@ -540,6 +632,9 @@ async function answerWithDefinition(
     });
     game.questionsCount += 1;
 
+    // ⭐ The answer is also a deduction: narrow the candidate list
+    await recomputeCandidates(game);
+
     // Out of 20 questions with no correct guess -> lose, reveal the answer
     if (game.questionsCount >= game.maxQuestions) {
         await finishGame(game, "lost");
@@ -578,8 +673,20 @@ async function guessPokemon(playerId, pokemonIdOrName) {
         };
     }
 
-    // Wrong guess: the game continues, but points are deducted
+    // Wrong guess: the game continues, but points are deducted.
+    // Remember WHICH Pokémon was guessed so the client can grey it out.
     game.wrongGuesses += 1;
+
+    const guessed = pokemonMetadataCache
+        .getAll()
+        .find(
+            (p) =>
+                normalizeName(p.name) === input || String(p.id) === input
+        );
+
+    if (guessed && !game.wrongGuessIds.includes(guessed.id)) {
+        game.wrongGuessIds.push(guessed.id);
+    }
 
     return {
         correct: false,
@@ -614,6 +721,15 @@ function getPublicState(playerId) {
         maxQuestions: game.maxQuestions,
         history: game.questionsAsked,
         wrongGuesses: game.wrongGuesses,
+        wrongGuessIds: game.wrongGuessIds || [],
+        filters: game.filters || { ...DEFAULT_SOLO_FILTERS },
+        // Slim candidates for the card list (full metadata stays server-side)
+        candidates: (game.candidates || []).map((p) => ({
+            id: p.id,
+            name: p.name,
+            sprite: p.sprite || null,
+            types: p.types || [],
+        })),
         score: game.score,
         elapsedSeconds: Math.floor(
             ((game.endTime || Date.now()) - game.startTime) / 1000
@@ -629,9 +745,11 @@ function endGame(playerId) {
 module.exports = {
     MAX_QUESTIONS,
     QUESTION_DEFINITIONS,
+    DEFAULT_SOLO_FILTERS,
     startSoloGame,
     askQuestion,
     askFreeText,
+    applySoloFilter,
     interpretQuestion,
     normalizeText,
     guessPokemon,

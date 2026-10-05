@@ -164,20 +164,28 @@ function Home() {
         };
     }, []);
 
-    // ---- GSAP: fullscreen hero collapses to the sides + header docks on scroll ----
+    // ---- Scroll: header docks + hero content glides out (robust, no scrub) ----
+    // NOTE: the hero fade used to be a scrubbed GSAP timeline, but the scrub
+    // could get stuck leaving the hero invisible (opacity: 0) on the live
+    // build. It is now a plain CSS class toggle driven by a scroll listener.
     useEffect(() => {
         const bar = barRef.current;
         const container = document.querySelector(".home-container");
+        const header = document.querySelector(".brand-header");
         if (!bar) return;
 
-        // Fallback for reduced motion: toggle CSS class on scroll
-        if (prefersReducedMotion()) {
-            const onScroll = () => {
-                const y = container ? container.scrollTop : window.scrollY;
-                const scrolled = y > 60;
-                bar.classList.toggle("scrolled", scrolled);
-                bar.classList.toggle("condensed", scrolled);
-            };
+        const reduceMotion = prefersReducedMotion();
+        const onScroll = () => {
+            const y = container ? container.scrollTop : window.scrollY;
+            const vh = window.innerHeight || 800;
+            const scrolled = y > 60;
+            bar.classList.toggle("scrolled", scrolled);
+            bar.classList.toggle("condensed", y > vh * 0.12);
+            // Hero content glides outward + fades once past ~18% of viewport
+            if (header) header.classList.toggle("hero-out", !reduceMotion && y > vh * 0.18);
+        };
+
+        if (reduceMotion) {
             container?.addEventListener("scroll", onScroll, { passive: true });
             window.addEventListener("scroll", onScroll, { passive: true });
             onScroll();
@@ -198,41 +206,35 @@ function Home() {
                     start: "top top+=60",
                     end: "bottom top",
                     scrub: 0.6,
-                    onUpdate: (self) => {
-                        // Past ~12% of the scroll: collapse the full auth
-                        // buttons into the single dropdown trigger
-                        bar.classList.toggle(
-                            "condensed",
-                            self.progress > 0.12
-                        );
-                    },
                 },
             });
-            // Hero daily: each element collapses outward to the sides
-            tl.to(".brand-header .hero-tag", { x: -140, opacity: 0 }, 0)
-                .to(".brand-header .hero-silhouette", { scale: 0.5, opacity: 0 }, 0)
-                .to(".brand-header .brand-title", { x: 160, opacity: 0 }, 0)
-                .to(".brand-header .daily-sub", { x: -130, opacity: 0 }, 0)
-                .to(".brand-header .hero-countdown", { x: 130, opacity: 0 }, 0)
-                .to(".brand-header .btn-daily", { x: -170, opacity: 0 }, 0)
-                // Header: pill (70%, translucent bg) -> full width, bg fades out.
-                // Logo & auth stay pinned to the bar edges via space-between,
-                // so they glide outward naturally as the bar widens —
-                // no x translation (it would push them off the bar).
-                // ease "none": width giãn đều theo scroll, không vọt nhanh lúc đầu
-                .to(".top-bar", {
-                    width: "100%",
-                    maxWidth: "100%",
-                    borderRadius: "0px 0px 0px 0px",
-                    backgroundColor: "rgba(255,253,248,0)",
-                    borderBottomColor: "rgba(43,58,85,0)",
-                    boxShadow: "0 0px 0 rgba(43,58,85,0)",
-                    ease: "none",
-                }, 0.05);
+            // Header: pill -> full width, bg fades out.
+            // Logo & auth stay pinned to the bar edges via space-between,
+            // so they glide outward naturally as the bar widens —
+            // no x translation (it would push them off the bar).
+            // ease "none": width giãn đều theo scroll, không vọt nhanh lúc đầu
+            tl.to(".top-bar", {
+                width: "100%",
+                maxWidth: "100%",
+                borderRadius: "0px 0px 0px 0px",
+                backgroundColor: "rgba(255,253,248,0)",
+                borderBottomColor: "rgba(43,58,85,0)",
+                boxShadow: "0 0px 0 rgba(43,58,85,0)",
+                ease: "none",
+            }, 0);
         });
 
+        container?.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+
         const t = setTimeout(() => ScrollTrigger.refresh(), 1200);
-        return () => { clearTimeout(t); ctx.revert(); };
+        return () => {
+            clearTimeout(t);
+            ctx.revert();
+            container?.removeEventListener("scroll", onScroll);
+            window.removeEventListener("scroll", onScroll);
+        };
     }, []);
 
     // ---- Random Mystery Pokémon ----

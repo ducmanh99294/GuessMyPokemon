@@ -498,6 +498,34 @@
     animation: bob 3.6s ease-in-out infinite reverse;
 }
 
+/* Hero content glides outward + fades on scroll (toggled by JS).
+   Pure CSS transition — immune to the scrub-timeline stuck bug. */
+.brand-header .hero-tag,
+.brand-header .hero-silhouette,
+.brand-header .brand-title,
+.brand-header .daily-sub,
+.brand-header .hero-countdown,
+.brand-header .btn-daily {
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    will-change: opacity, transform;
+}
+.brand-header.hero-out .hero-tag { opacity: 0; transform: translateX(-140px); }
+.brand-header.hero-out .hero-silhouette { opacity: 0; transform: scale(0.5); }
+.brand-header.hero-out .brand-title { opacity: 0; transform: translateX(160px); }
+.brand-header.hero-out .daily-sub { opacity: 0; transform: translateX(-130px); }
+.brand-header.hero-out .hero-countdown { opacity: 0; transform: translateX(130px); }
+.brand-header.hero-out .btn-daily { opacity: 0; transform: translateX(-170px); }
+@media (prefers-reduced-motion: reduce) {
+    .brand-header .hero-tag,
+    .brand-header .hero-silhouette,
+    .brand-header .brand-title,
+    .brand-header .daily-sub,
+    .brand-header .hero-countdown,
+    .brand-header .btn-daily {
+        transition: none;
+    }
+}
+
 /* ===== HERO — DAILY CHALLENGE ===== */
 .hero-tag {
     font-size: 0.8rem;

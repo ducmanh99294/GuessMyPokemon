@@ -25,6 +25,7 @@ function Solo() {
     const [game, setGame] = useState(null); // public state from server
     const [questions, setQuestions] = useState([]); // { key, label, needsValue }
     const [genValue, setGenValue] = useState("1");
+    const [typeValue, setTypeValue] = useState("fire");
     const [freeQuestion, setFreeQuestion] = useState("");
     const [searchInput, setSearchInput] = useState(""); // search within candidates
     const [playerName, setPlayerName] = useState(
@@ -665,7 +666,11 @@ function Solo() {
 
                             <div className="question-list">
                                 {questions
-                                    .filter((q) => !q.needsValue)
+                                    .filter(
+                                        (q) =>
+                                            !q.needsValue &&
+                                            !q.key.startsWith("type_")
+                                    )
                                     .map((q) => {
                                         const asked = game.history.some(
                                             (h) => h.key === q.key
@@ -687,6 +692,51 @@ function Solo() {
                                             </button>
                                         );
                                     })}
+                            </div>
+
+                            <div className="gen-ask">
+                                <label htmlFor="typeSelect">Ask by type:</label>
+                                <div className="gen-ask-row">
+                                    <select
+                                        id="typeSelect"
+                                        value={typeValue}
+                                        onChange={(e) =>
+                                            setTypeValue(e.target.value)
+                                        }
+                                    >
+                                        {questions
+                                            .filter((q) =>
+                                                q.key.startsWith("type_")
+                                            )
+                                            .map((q) => {
+                                                const t = q.key.slice(5);
+                                                return (
+                                                    <option key={q.key} value={t}>
+                                                        {t.charAt(0).toUpperCase() +
+                                                            t.slice(1)}
+                                                    </option>
+                                                );
+                                            })}
+                                    </select>
+                                    <button
+                                        className="btn-secondary"
+                                        onClick={() => {
+                                            const def = questions.find(
+                                                (q) =>
+                                                    q.key ===
+                                                    `type_${typeValue}`
+                                            );
+                                            fillSuggestion(
+                                                def
+                                                    ? def.label
+                                                    : `Is it a ${typeValue} type?`
+                                            );
+                                        }}
+                                        disabled={loading}
+                                    >
+                                        Fill suggestion
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="gen-ask">

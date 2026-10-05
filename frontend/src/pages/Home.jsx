@@ -71,6 +71,36 @@ function scrollToId(id) {
 
 const DEX_IDS = [1, 4, 7, 25, 39, 94, 133, 143, 150, 448];
 
+// Top-3 podium, shared by the Daily and PVP boards on Home
+function Podium({ data }) {
+    if (data === null) {
+        return <p className="muted">Loading...</p>;
+    }
+
+    if (data.length === 0) {
+        return (
+            <p className="muted">No one has played yet. Be the first!</p>
+        );
+    }
+
+    return (
+        <div className="podium">
+            {data.map((t, i) => (
+                <div key={t.id || i} className={`podium-place p${i + 1}`}>
+                    <span className="podium-rank">#{i + 1}</span>
+                    <span className="podium-avatar">
+                        {(t.playerName || "?").charAt(0).toUpperCase()}
+                    </span>
+                    <span className="podium-name">
+                        {t.playerName || "???"}
+                    </span>
+                    <span className="podium-score">{t.score} pts</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function Home() {
     const navigate = useNavigate();
     // ---- State ----
@@ -102,6 +132,7 @@ function Home() {
     const [daily, setDaily] = useState(null);
     const [dex, setDex] = useState([]);
     const [topTrainers, setTopTrainers] = useState(null); // null = not loaded yet
+    const [topPvp, setTopPvp] = useState(null); // null = not loaded yet
     const [achievements, setAchievements] = useState([
         { icon: "🌱", label: "First Steps", desc: "Take today's challenge", unlocked: false },
         { icon: "🔥", label: "Dedicated", desc: "Play 10 daily challenges", unlocked: false },
@@ -238,6 +269,16 @@ function Home() {
             .then((r) => r.json())
             .then((j) => { if (!dead && j?.success) setTopTrainers(j.data || []); })
             .catch(() => { if (!dead) setTopTrainers([]); });
+        return () => { dead = true; };
+    }, []);
+
+    // ---- Top PvP trainers (real pvp leaderboard) ----
+    useEffect(() => {
+        let dead = false;
+        fetch(`${API_BASE}/api/pvp/leaderboard/top?limit=3`)
+            .then((r) => r.json())
+            .then((j) => { if (!dead && j?.success) setTopPvp(j.data || []); })
+            .catch(() => { if (!dead) setTopPvp([]); });
         return () => { dead = true; };
     }, []);
 
@@ -586,26 +627,17 @@ function Home() {
                 <section className="mid-row">
                     <div className="trainers">
                         <h2 className="section-title">TOP TRAINERS</h2>
-                        {topTrainers === null ? (
-                            <p className="muted">Loading...</p>
-                        ) : topTrainers.length === 0 ? (
-                            <p className="muted">No one has played yet. Be the first!</p>
-                        ) : (
-                            <div className="podium">
-                                {topTrainers.map((t, i) => (
-                                    <div key={t.id || i} className={`podium-place p${i + 1}`}>
-                                        <span className="podium-rank">#{i + 1}</span>
-                                        <span className="podium-avatar">
-                                            {(t.playerName || "?").charAt(0).toUpperCase()}
-                                        </span>
-                                        <span className="podium-name">{t.playerName || "???"}</span>
-                                        <span className="podium-score">{t.score} pts</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <Podium data={topTrainers} />
                         <button className="mini-btn" onClick={() => navigate("/solo")}>
                             View Leaderboard
+                        </button>
+
+                        <div className="podium-divider" aria-hidden="true"></div>
+
+                        <h2 className="section-title">TOP PVP TRAINERS</h2>
+                        <Podium data={topPvp} />
+                        <button className="mini-btn" onClick={() => navigate("/pvp")}>
+                            View PVP Board
                         </button>
                     </div>
 

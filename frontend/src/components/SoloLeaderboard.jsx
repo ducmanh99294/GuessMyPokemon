@@ -12,7 +12,7 @@ function formatDate(iso) {
     }
 }
 
-function SoloLeaderboard({ refreshKey, apiBase, mode = "daily" }) {
+function SoloLeaderboard({ refreshKey, apiBase, mode = "daily", limit = 10 }) {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,7 @@ function SoloLeaderboard({ refreshKey, apiBase, mode = "daily" }) {
         let cancelled = false;
         setLoading(true);
 
-        fetch(`${base}/api/${mode}/leaderboard/top?limit=10`)
+        fetch(`${base}/api/${mode}/leaderboard/top?limit=${limit}`)
             .then((r) => r.json())
             .then((json) => {
                 if (!cancelled && json?.success) setRows(json.data || []);
@@ -35,7 +35,7 @@ function SoloLeaderboard({ refreshKey, apiBase, mode = "daily" }) {
         return () => {
             cancelled = true;
         };
-    }, [refreshKey, base, mode]);
+    }, [refreshKey, base, mode, limit]);
 
     if (loading) {
         return (

@@ -44,6 +44,20 @@ const DEFAULT_SOLO_FILTERS = {
 
 const VALID_SOLO_FILTER_KEYS = Object.keys(DEFAULT_SOLO_FILTERS);
 
+// National Dex numbers of the 3 starter Pokémon of each generation
+// (fixed by Game Freak, safe to hardcode).
+const STARTER_IDS = [
+    1, 4, 7, // gen 1: Bulbasaur, Charmander, Squirtle
+    152, 155, 158, // gen 2: Chikorita, Cyndaquil, Totodile
+    252, 255, 258, // gen 3: Treecko, Torchic, Mudkip
+    387, 390, 393, // gen 4: Turtwig, Chimchar, Piplup
+    495, 498, 501, // gen 5: Snivy, Tepig, Oshawott
+    650, 653, 656, // gen 6: Chespin, Fennekin, Froakie
+    722, 725, 728, // gen 7: Rowlet, Litten, Popplio
+    810, 813, 816, // gen 8: Grookey, Scorbunny, Sobble
+    906, 909, 912, // gen 9: Sprigatito, Fuecoco, Quaxly
+];
+
 // In-memory store: playerId -> game
 // Each playerId has at most 1 active solo game at a time.
 const games = new Map();
@@ -62,52 +76,10 @@ const games = new Map();
 // -----------------------------------------------------
 const QUESTION_DEFINITIONS = [
     {
-        key: "type_fire",
-        label: "Is it a Fire type?",
-        check: (m) => m.types.includes("fire"),
-        keywords: ["hệ lửa", "lua", "fire"],
-    },
-    {
-        key: "type_water",
-        label: "Is it a Water type?",
-        check: (m) => m.types.includes("water"),
-        keywords: ["hệ nước", "nuoc", "water"],
-    },
-    {
-        key: "type_grass",
-        label: "Is it a Grass type?",
-        check: (m) => m.types.includes("grass"),
-        keywords: ["hệ cỏ", "co", "grass"],
-    },
-    {
-        key: "type_electric",
-        label: "Is it an Electric type?",
-        check: (m) => m.types.includes("electric"),
-        keywords: ["hệ điện", "dien", "electric"],
-    },
-    {
-        key: "type_flying",
-        label: "Is it a Flying type?",
-        check: (m) => m.types.includes("flying"),
-        keywords: ["hệ bay", "bay", "flying", "cánh", "canh"],
-    },
-    {
-        key: "type_dragon",
-        label: "Is it a Dragon type?",
-        check: (m) => m.types.includes("dragon"),
-        keywords: ["hệ rồng", "rong", "dragon"],
-    },
-    {
-        key: "type_psychic",
-        label: "Is it a Psychic type?",
-        check: (m) => m.types.includes("psychic"),
-        keywords: ["tâm linh", "tam linh", "psychic", "ngoại cảm", "ngoai cam"],
-    },
-    {
         key: "dual_type",
         label: "Does it have 2 types?",
         check: (m) => m.types.length > 1,
-        keywords: ["2 hệ", "2 he", "hai hệ", "hai he", "dual", "song hệ", "song he"],
+        keywords: ["2 hệ", "2 he", "hai hệ", "hai he", "dual", "song hệ", "song he", "đa hệ", "da he", "nhiều hệ", "nhieu he", "multi type"],
     },
     {
         key: "generation",
@@ -115,6 +87,20 @@ const QUESTION_DEFINITIONS = [
         needsValue: true, // value: 1-9
         check: (m, value) => m.generation === Number(value),
         keywords: ["thế hệ", "the he", "generation", "gen"],
+    },
+    {
+        key: "generation_range",
+        label: "Is it from generation {from} to {to}?",
+        needsValue: true, // value: { from, to }
+        valueKind: "genRange",
+        check: (m, value) => {
+            const from = Number(value?.from);
+            const to = Number(value?.to);
+            return m.generation >= from && m.generation <= to;
+        },
+        // Reached via the generation-range override in interpretQuestion
+        // ("from gen 2 to 5", "từ gen 2 đến 5", ...), not just these keywords.
+        keywords: ["từ gen", "tu gen", "from gen", "đến gen", "den gen", "to gen", "between"],
     },
     {
         key: "legendary",
@@ -146,10 +132,105 @@ const QUESTION_DEFINITIONS = [
         check: (m) => m.hasEvolution === true,
         keywords: ["tiến hóa", "tien hoa", "tiến hoá", "tien hoa", "evolve", "evolution"],
     },
+    {
+        key: "starter",
+        label: "Is it a starter Pokémon?",
+        // Starter = one of the 3 partner Pokémon of each generation,
+        // identified by National Dex number (fixed by Game Freak).
+        check: (m) => STARTER_IDS.includes(m.id),
+        keywords: ["starter", "khởi đầu", "khoi dau", "ban đầu", "ban dau", "partner pokemon"],
+    },
 ];
 
 function getDefinition(questionKey) {
     return QUESTION_DEFINITIONS.find((q) => q.key === questionKey);
+}
+
+// -----------------------------------------------------
+// ALL 18 TYPE QUESTIONS (generated)
+// "Is it a <type> type?" — English + Vietnamese keywords.
+// -----------------------------------------------------
+const TYPE_QUESTIONS = [
+    { type: "normal", label: "Is it a Normal type?", keywords: ["normal", "thường", "thuong"] },
+    { type: "fire", label: "Is it a Fire type?", keywords: ["hệ lửa", "lua", "fire"] },
+    { type: "water", label: "Is it a Water type?", keywords: ["hệ nước", "nuoc", "water"] },
+    { type: "electric", label: "Is it an Electric type?", keywords: ["hệ điện", "dien", "electric"] },
+    { type: "grass", label: "Is it a Grass type?", keywords: ["hệ cỏ", "co", "grass"] },
+    { type: "ice", label: "Is it an Ice type?", keywords: ["hệ băng", "bang", "ice"] },
+    { type: "fighting", label: "Is it a Fighting type?", keywords: ["hệ giác đấu", "giac dau", "fighting", "fight"] },
+    { type: "poison", label: "Is it a Poison type?", keywords: ["hệ độc", "doc", "poison"] },
+    { type: "ground", label: "Is it a Ground type?", keywords: ["hệ đất", "dat", "ground"] },
+    { type: "flying", label: "Is it a Flying type?", keywords: ["hệ bay", "bay", "flying", "cánh", "canh"] },
+    { type: "psychic", label: "Is it a Psychic type?", keywords: ["tâm linh", "tam linh", "psychic", "ngoại cảm", "ngoai cam"] },
+    { type: "bug", label: "Is it a Bug type?", keywords: ["hệ bọ", "bo", "hệ sâu", "sau", "bug"] },
+    { type: "rock", label: "Is it a Rock type?", keywords: ["hệ đá", "da", "rock"] },
+    { type: "ghost", label: "Is it a Ghost type?", keywords: ["hệ ma", "ma", "ghost"] },
+    { type: "dragon", label: "Is it a Dragon type?", keywords: ["hệ rồng", "rong", "dragon"] },
+    { type: "dark", label: "Is it a Dark type?", keywords: ["hệ bóng tối", "bong toi", "bóng đêm", "bong dem", "dark"] },
+    { type: "steel", label: "Is it a Steel type?", keywords: ["hệ thép", "thep", "steel"] },
+    { type: "fairy", label: "Is it a Fairy type?", keywords: ["hệ tiên", "tien", "fairy"] },
+];
+
+for (const tq of TYPE_QUESTIONS) {
+    QUESTION_DEFINITIONS.push({
+        key: `type_${tq.type}`,
+        label: tq.label,
+        check: (m) => (m.types || []).includes(tq.type),
+        keywords: tq.keywords,
+    });
+}
+
+// -----------------------------------------------------
+// TYPE-EFFECTIVENESS QUESTIONS (generated, phase-1 only)
+// "Is it weak to fire?" / "Does it resist fire?" /
+// "Is it immune to electric?" / "Does fire do normal damage to it?"
+//
+// These have NO phase-2 keywords on purpose: they are reached
+// via interpretEffectiveness(), which runs BEFORE the generic
+// keyword matcher so that "fire" alone can never hijack them
+// into "Is it a Fire type?".
+// -----------------------------------------------------
+const EFFECTIVENESS_QUESTIONS = [
+    {
+        key: "weak_to",
+        label: "Is it weak to {value} type?",
+        signals: ["weak to", "weak", "weakness", "yeu", "2x", "x2", "super effective", "supereffective", "sieu hieu qua"],
+        // X-type moves deal 2x or more damage to it
+        check: (eff) => !!eff && eff.multiplier >= 2,
+    },
+    {
+        key: "resists",
+        label: "Does it resist {value} type?",
+        signals: ["resist", "khang", "not very effective"],
+        // X-type moves deal 0.5x damage to it
+        check: (eff) => !!eff && eff.multiplier > 0 && eff.multiplier < 1,
+    },
+    {
+        key: "immune_to",
+        label: "Is it immune to {value} type?",
+        signals: ["immune", "mien nhiem", "no effect", "no damage", "does not affect", "doesnt affect"],
+        // X-type moves deal no damage to it
+        check: (eff) => !!eff && eff.multiplier === 0,
+    },
+    {
+        key: "normal_vs",
+        label: "Does {value} type do normal damage to it?",
+        signals: ["normal damage", "normal with", "normal against", "normal to", "1x", "x1"],
+        // X-type moves deal exactly 1x damage to it
+        check: (eff) => !!eff && eff.multiplier === 1,
+    },
+];
+
+for (const eq of EFFECTIVENESS_QUESTIONS) {
+    QUESTION_DEFINITIONS.push({
+        key: eq.key,
+        label: eq.label,
+        needsValue: true, // value: type name, e.g. "fire"
+        valueKind: "type",
+        check: (m, value) =>
+            eq.check(m.effectiveness?.[String(value).toLowerCase()]),
+        keywords: [],
+    });
 }
 
 // -----------------------------------------------------
@@ -203,14 +284,229 @@ function extractGeneration(normText) {
     return null;
 }
 
+// Signals for a generation RANGE question ("from gen 2 to 5",
+// "từ gen 2 đến 5", "between gen 2 and 5"). Normalized text.
+const GEN_RANGE_SIGNALS = ["from", "tu", "to", "den", "between"];
+
+// Extract { from, to } from "from gen 2 to 5" / "từ gen 2 đến 5".
+// Returns null when it is not a range question.
+function extractGenerationRange(normText) {
+    const padded = ` ${normText} `;
+    const hasSignal = GEN_RANGE_SIGNALS.some((kw) =>
+        padded.includes(` ${kw} `)
+    );
+
+    if (!hasSignal) {
+        return null;
+    }
+
+    const nums = normText.match(/\b([1-9])\b/g);
+
+    if (!nums || nums.length < 2) {
+        return null;
+    }
+
+    const a = Number(nums[0]);
+    const b = Number(nums[1]);
+
+    return { from: Math.min(a, b), to: Math.max(a, b) };
+}
+
+// -----------------------------------------------------
+// TYPE-EFFECTIVENESS QUESTIONS (phase 1 of interpretation)
+//
+// "x2 with fire", "weak to fire", "super effective with fire",
+// "yếu hệ lửa" ... all ask whether the secret takes 2x+ damage
+// from that type — NOT "is it a fire type?".
+// This runs BEFORE the generic keyword matcher so the word
+// "fire" alone can never hijack these questions.
+// -----------------------------------------------------
+const ALL_TYPES = [
+    "normal", "fire", "water", "electric", "grass", "ice",
+    "fighting", "poison", "ground", "flying", "psychic", "bug",
+    "rock", "ghost", "dragon", "dark", "steel", "fairy",
+];
+
+// (Effectiveness signals now live per-question in EFFECTIVENESS_QUESTIONS.)
+
+// Vietnamese type names (normalized) -> English type
+const TYPE_ALIASES = [
+    ["lua", "fire"],
+    ["nuoc", "water"],
+    ["co", "grass"],
+    ["dien", "electric"],
+    ["bang", "ice"],
+    ["giac dau", "fighting"],
+    ["doc", "poison"],
+    ["dat", "ground"],
+    ["bay", "flying"],
+    ["tam linh", "psychic"],
+    ["sau", "bug"],
+    ["bo", "bug"],
+    ["da", "rock"],
+    ["ma", "ghost"],
+    ["rong", "dragon"],
+    ["bong toi", "dark"],
+    ["thep", "steel"],
+    ["tien", "fairy"],
+];
+
+// Extract a type name from normalized text (English or Vietnamese).
+function extractType(normText) {
+    const padded = ` ${normText} `;
+
+    for (const t of ALL_TYPES) {
+        if (padded.includes(` ${t} `)) {
+            return t;
+        }
+    }
+
+    for (const [alias, t] of TYPE_ALIASES) {
+        if (padded.includes(` ${alias} `)) {
+            return t;
+        }
+    }
+
+    if (padded.includes(" fight ")) {
+        return "fighting";
+    }
+
+    return null;
+}
+
+// Extract an explicit damage multiplier from the RAW text
+// ("x2", "2x", "x4", "x1", "1x", "x1/2", "1/2x", "x0.5", "0.5x").
+// Must run on the raw text because normalizeText turns "x1/2"
+// into "x1 2", losing the fraction. Returns null when absent.
+function extractMultiplier(rawText) {
+    const t = String(rawText || "").toLowerCase();
+
+    // Fractions / decimals (0.5x) — check BEFORE plain "x1"
+    if (/\bx\s*1\s*\/\s*2\b/.test(t) || /\b1\s*\/\s*2\s*x\b/.test(t)) {
+        return 0.5;
+    }
+
+    if (/\bx\s*0\.5\b/.test(t) || /\b0\.5\s*x\b/.test(t)) {
+        return 0.5;
+    }
+
+    if (/\bx\s*4\b/.test(t) || /\b4\s*x\b/.test(t)) {
+        return 4;
+    }
+
+    if (/\bx\s*2\b/.test(t) || /\b2\s*x\b/.test(t)) {
+        return 2;
+    }
+
+    if (/\bx\s*1\b/.test(t) || /\b1\s*x\b/.test(t)) {
+        return 1;
+    }
+
+    return null;
+}
+
+// Phase 1: detect "<effect> <type>" style questions, e.g.
+// "weak to fire", "does it resist fire?", "immune to electric",
+// "does fire do normal damage to it?", "x1/2 with fire".
+// Returns { key, value } or null (not an effectiveness question).
+function interpretEffectiveness(normText, rawText) {
+    const padded = ` ${normText} `;
+
+    // Strongest signal first: an explicit multiplier.
+    // "x1/2" = 0.5x = resists (NOT "x1" = normal damage).
+    const mult = extractMultiplier(rawText);
+
+    if (mult !== null) {
+        const key =
+            mult >= 2 ? "weak_to" : mult === 1 ? "normal_vs" : "resists";
+        const type = extractType(normText);
+
+        if (!type) {
+            return {
+                key,
+                value: null,
+                missingValue: true,
+                valueKind: "type",
+            };
+        }
+
+        return { key, value: type };
+    }
+
+    for (const eq of EFFECTIVENESS_QUESTIONS) {
+        const signal = eq.signals.find((kw) =>
+            padded.includes(` ${kw} `)
+        );
+
+        if (!signal) {
+            continue;
+        }
+
+        // Strip the signal phrase before extracting the type, so effect
+        // vocabulary can't be mistaken for the type name
+        // ("is fire normal against it?" -> type "fire", not "normal").
+        const rest = padded.replace(` ${signal} `, " ");
+        const type = extractType(rest);
+
+        if (!type) {
+            return {
+                key: eq.key,
+                value: null,
+                missingValue: true,
+                valueKind: "type",
+            };
+        }
+
+        return { key: eq.key, value: type };
+    }
+
+    return null;
+}
+
 // Understand a free-text question -> { key, value } or null (not understood)
 function interpretQuestion(questionText) {
+    // Dash range ("gen 1-5", "gen 1 - 5"): detect on the RAW text
+    // because normalizeText strips dashes into spaces.
+    const dashRange = String(questionText || "").match(
+        /\b([1-9])\s*-\s*([1-9])\b/
+    );
+
+    if (dashRange) {
+        const rawNorm = normalizeText(questionText);
+        const padded = ` ${rawNorm} `;
+
+        if (
+            padded.includes(" gen ") ||
+            padded.includes(" generation ") ||
+            padded.includes(" the he ")
+        ) {
+            const a = Number(dashRange[1]);
+            const b = Number(dashRange[2]);
+
+            return {
+                key: "generation_range",
+                value: { from: Math.min(a, b), to: Math.max(a, b) },
+            };
+        }
+    }
+
     const norm = normalizeText(questionText);
 
     if (!norm) {
         return null;
     }
 
+    // Phase 1: type-effectiveness questions ("x2 with fire",
+    // "weak to fire", "super effective with fire", "x1/2 with fire"...).
+    // Must run before the generic matcher so the bare word
+    // "fire" can never hijack them into "Is it a Fire type?".
+    const eff = interpretEffectiveness(norm, questionText);
+
+    if (eff) {
+        return eff;
+    }
+
+    // Phase 2: generic keyword matcher
     const padded = ` ${norm} `;
     let best = null;
 
@@ -244,14 +540,56 @@ function interpretQuestion(questionText) {
         return null;
     }
 
+    // Generation-range override: "from gen 2 to 5" / "từ gen 2 đến 5"
+    // always wins over an exact-generation match, no matter which
+    // keyword won the generic matcher above.
+    if (
+        best.def.key === "generation" ||
+        best.def.key === "generation_range"
+    ) {
+        const range = extractGenerationRange(norm);
+
+        if (range) {
+            return { key: "generation_range", value: range };
+        }
+    }
+
     let value = null;
 
     if (best.def.needsValue) {
-        value = extractGeneration(norm);
+        if (best.def.valueKind === "type") {
+            value = extractType(norm);
 
-        if (value === null) {
-            // Understood as a generation question but missing the number -> not enough to answer
-            return { key: best.def.key, value: null, missingValue: true };
+            if (!value) {
+                return {
+                    key: best.def.key,
+                    value: null,
+                    missingValue: true,
+                    valueKind: "type",
+                };
+            }
+        } else if (best.def.valueKind === "genRange") {
+            // Only reachable when the range override found no 2nd number,
+            // e.g. "from gen 3" -> treat as an exact generation question.
+            const g = extractGeneration(norm);
+
+            if (g === null) {
+                return {
+                    key: best.def.key,
+                    value: null,
+                    missingValue: true,
+                    valueKind: "genRange",
+                };
+            }
+
+            return { key: "generation", value: g };
+        } else {
+            value = extractGeneration(norm);
+
+            if (value === null) {
+                // Understood as a generation question but missing the number -> not enough to answer
+                return { key: best.def.key, value: null, missingValue: true };
+            }
         }
     }
 
@@ -318,49 +656,23 @@ function findSecret(game) {
 // shrinks automatically so the player sees the remaining
 // possibilities narrow down in real time.
 // -----------------------------------------------------
+// A Yes/No answer IS a deduction: reuse the question's own check()
+// so every current and future definition narrows candidates
+// automatically (types, dual, generation, range, legendary,
+// effectiveness, starter, ...).
 function deductionMatches(pokemon, h) {
-    const key = h.key || "";
+    const def = getDefinition(h.key);
 
-    // Type questions: "type_fire", "type_water", ...
-    if (key.startsWith("type_")) {
-        const t = key.slice(5);
-        const has = (pokemon.types || []).includes(t);
-        return h.answer ? has : !has;
+    if (!def) {
+        return true;
     }
 
-    switch (key) {
-        case "dual_type": {
-            const dual = (pokemon.types || []).length > 1;
-            return h.answer ? dual : !dual;
-        }
-        case "generation": {
-            const g = Number(h.questionValue);
-            return h.answer
-                ? pokemon.generation === g
-                : pokemon.generation !== g;
-        }
-        case "legendary":
-            return h.answer
-                ? pokemon.legendary === true
-                : pokemon.legendary !== true;
-        case "mythical":
-            return h.answer
-                ? pokemon.mythical === true
-                : pokemon.mythical !== true;
-        case "baby":
-            return h.answer
-                ? pokemon.baby === true
-                : pokemon.baby !== true;
-        case "mega":
-            return h.answer
-                ? pokemon.mega === true
-                : pokemon.mega !== true;
-        case "hasEvolution":
-            return h.answer
-                ? pokemon.hasEvolution === true
-                : pokemon.hasEvolution !== true;
-        default:
-            return true;
+    try {
+        const matches = !!def.check(pokemon, h.questionValue);
+        return h.answer ? matches : !matches;
+    } catch {
+        // Never let a bad deduction wipe the candidate list
+        return true;
     }
 }
 
@@ -558,16 +870,20 @@ async function askFreeText(playerId, questionText) {
             understood: false,
             message:
                 "I didn't understand that question. Try asking about type (fire, water...), " +
-                "generation, evolution, legendary... or click a suggestion below.",
+                "weakness (\"weak to fire\"), generation (\"gen 3\", \"gen 1-5\", \"from gen 2 to 5\"), " +
+                "starter, evolution, legendary... or click a suggestion below.",
         };
     }
 
     if (interpreted.missingValue) {
-        return {
-            understood: false,
-            message:
-                "Which generation do you want to ask about? Example: \"Is this Pokémon from generation 3?\"",
-        };
+        const message =
+            interpreted.valueKind === "type"
+                ? "Which type do you mean? Example: \"Is it weak to fire?\""
+                : interpreted.valueKind === "genRange"
+                  ? "Which generations? Example: \"Is it from generation 2 to 5?\""
+                  : "Which generation do you want to ask about? Example: \"Is this Pokémon from generation 3?\"";
+
+        return { understood: false, message };
     }
 
     const def = getDefinition(interpreted.key);
@@ -592,6 +908,20 @@ async function askFreeText(playerId, questionText) {
         interpretedLabel: result.interpretedLabel,
         ...result,
     };
+}
+
+// Build the display label for a question, substituting its value.
+// valueKind "genRange" uses { from, to } instead of a single {value}.
+function formatLabel(def, value) {
+    if (def.key === "generation_range" && value) {
+        return `Is it from generation ${value.from} to ${value.to}?`;
+    }
+
+    if (def.needsValue) {
+        return def.label.replace("{value}", String(value));
+    }
+
+    return def.label;
 }
 
 // Shared core: check turns, run check(), write history.
@@ -619,9 +949,7 @@ async function answerWithDefinition(
     const secret = findSecret(game);
     const answer = !!def.check(secret, questionValue);
 
-    const label = def.needsValue
-        ? def.label.replace("{value}", String(questionValue))
-        : def.label;
+    const label = formatLabel(def, questionValue);
 
     game.questionsAsked.push({
         key: def.key,

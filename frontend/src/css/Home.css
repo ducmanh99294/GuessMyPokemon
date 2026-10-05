@@ -862,6 +862,13 @@
 
 .trainers .mini-btn { align-self: center; margin-top: 16px; }
 
+.podium-divider {
+    width: 100%;
+    margin: 22px 0 4px;
+    border-top: 3px dashed #2B3A55;
+    opacity: 0.35;
+}
+
 /* Podium */
 .podium {
     display: flex;

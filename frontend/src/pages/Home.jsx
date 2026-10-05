@@ -9,7 +9,7 @@ import socket from "../socket/socket";
 import { getPlayerId } from "../utils/playerId";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { gsap, ScrollTrigger, prefersReducedMotion } from "../lib/gsap";
+import { prefersReducedMotion } from "../lib/gsap";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 const MAX_POKEMON_ID = 1025;
@@ -164,10 +164,9 @@ function Home() {
         };
     }, []);
 
-    // ---- Scroll: header docks + hero content glides out (robust, no scrub) ----
-    // NOTE: the hero fade used to be a scrubbed GSAP timeline, but the scrub
-    // could get stuck leaving the hero invisible (opacity: 0) on the live
-    // build. It is now a plain CSS class toggle driven by a scroll listener.
+    // ---- Scroll: header docks/widens + hero content glides out ----
+    // Pure CSS classes driven by a scroll listener (no GSAP scrub — the scrub
+    // timeline proved fragile on the live build and left elements stuck hidden).
     useEffect(() => {
         const bar = barRef.current;
         const container = document.querySelector(".home-container");
@@ -178,60 +177,17 @@ function Home() {
         const onScroll = () => {
             const y = container ? container.scrollTop : window.scrollY;
             const vh = window.innerHeight || 800;
-            const scrolled = y > 60;
-            bar.classList.toggle("scrolled", scrolled);
+            bar.classList.toggle("scrolled", y > 60);
+            bar.classList.toggle("docked", y > 40);
             bar.classList.toggle("condensed", y > vh * 0.12);
             // Hero content glides outward + fades once past ~18% of viewport
             if (header) header.classList.toggle("hero-out", !reduceMotion && y > vh * 0.18);
         };
 
-        if (reduceMotion) {
-            container?.addEventListener("scroll", onScroll, { passive: true });
-            window.addEventListener("scroll", onScroll, { passive: true });
-            onScroll();
-            return () => {
-                container?.removeEventListener("scroll", onScroll);
-                window.removeEventListener("scroll", onScroll);
-            };
-        }
-
-        bar.classList.add("gsap-on");
-
-        const ctx = gsap.context(() => {
-            const tl = gsap.timeline({
-                defaults: { ease: "power1.in" },
-                scrollTrigger: {
-                    trigger: ".brand-header",
-                    scroller: ".home-container",
-                    start: "top top+=60",
-                    end: "bottom top",
-                    scrub: 0.6,
-                },
-            });
-            // Header: pill -> full width, bg fades out.
-            // Logo & auth stay pinned to the bar edges via space-between,
-            // so they glide outward naturally as the bar widens —
-            // no x translation (it would push them off the bar).
-            // ease "none": width giãn đều theo scroll, không vọt nhanh lúc đầu
-            tl.to(".top-bar", {
-                width: "100%",
-                maxWidth: "100%",
-                borderRadius: "0px 0px 0px 0px",
-                backgroundColor: "rgba(255,253,248,0)",
-                borderBottomColor: "rgba(43,58,85,0)",
-                boxShadow: "0 0px 0 rgba(43,58,85,0)",
-                ease: "none",
-            }, 0);
-        });
-
         container?.addEventListener("scroll", onScroll, { passive: true });
         window.addEventListener("scroll", onScroll, { passive: true });
         onScroll();
-
-        const t = setTimeout(() => ScrollTrigger.refresh(), 1200);
         return () => {
-            clearTimeout(t);
-            ctx.revert();
             container?.removeEventListener("scroll", onScroll);
             window.removeEventListener("scroll", onScroll);
         };
